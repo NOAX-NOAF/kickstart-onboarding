@@ -52,31 +52,29 @@ const services = [
   "SMS / WhatsApp delivery", "GPS validation API",
 ];
 
-const baseFeed = [
-  { t: "06:07:04", color: "primary", msg: "Batchelors: UGC photo approved by Sarah Connolly" },
-  { t: "06:07:00", color: "primary", msg: "Three: Voucher batch claimed at Vodafone Arena (44 QRs)" },
-  { t: "06:06:56", color: "amber", msg: "Hunky Dorys: New campaign created by Aoife Byrne" },
-  { t: "06:06:42", color: "primary", msg: "Odlums: 12 redemptions processed at Dunnes Stillorgan" },
-  { t: "06:06:30", color: "primary", msg: "Platform: Master venue verified by field staff (Kehoe's Pub)" },
-];
-
 function ActivityFeed() {
-  const [feed, setFeed] = React.useState(baseFeed);
+  const { activity, onboardedTenants, pushActivity } = useDemo();
+
+  // Auto-emit a "scan claimed" style event for the most recently onboarded tenant
   React.useEffect(() => {
+    if (onboardedTenants.length === 0) return;
+    const tenant = onboardedTenants[0];
+    const brand = tenant.brands.match(/\(([^)]+)\)/)?.[1] ?? tenant.name;
+    const venues = ["The Porterhouse", "Kehoe's Pub", "The Long Hall", "Mulligan's", "Doheny & Nesbitt"];
     const id = setInterval(() => {
-      setFeed((f) => {
-        const next = [...baseFeed];
-        // bump timestamps by a second to feel live
-        const now = new Date();
-        const hh = String(now.getHours()).padStart(2, "0");
-        const mm = String(now.getMinutes()).padStart(2, "0");
-        const ss = String(now.getSeconds()).padStart(2, "0");
-        next[0] = { ...next[0], t: `${hh}:${mm}:${ss}` };
-        return next;
+      const venue = venues[Math.floor(Math.random() * venues.length)];
+      const qrs = 10 + Math.floor(Math.random() * 80);
+      pushActivity({
+        color: "primary",
+        msg: `${brand}: Voucher batch claimed at ${venue} (${qrs} QRs)`,
       });
-    }, 4500);
+    }, 6000);
     return () => clearInterval(id);
-  }, []);
+  }, [onboardedTenants, pushActivity]);
+
+  const dotClass = (c: string) =>
+    c === "amber" ? "bg-amber-500" : c === "success" ? "bg-emerald-500" : "bg-primary";
+
   return (
     <div className="bg-card border rounded-xl p-5">
       <div className="flex items-center justify-between mb-4">
@@ -86,11 +84,16 @@ function ActivityFeed() {
         </span>
       </div>
       <div className="divide-y">
-        {feed.map((e, i) => (
-          <div key={i} className="py-2.5 flex items-center gap-3 text-sm animate-in fade-in slide-in-from-top-1 duration-300">
+        {activity.map((e) => (
+          <div
+            key={e.id}
+            className={`py-2.5 flex items-center gap-3 text-sm animate-in fade-in slide-in-from-top-2 duration-500 ${
+              e.highlight ? "bg-emerald-50/60 dark:bg-emerald-950/20 -mx-2 px-2 rounded" : ""
+            }`}
+          >
             <span className="font-mono text-xs text-muted-foreground tabular-nums">{e.t}</span>
-            <span className={`h-2 w-2 rounded-full ${e.color === "amber" ? "bg-amber-500" : "bg-primary"}`} />
-            <span className="text-foreground/90">{e.msg}</span>
+            <span className={`h-2 w-2 rounded-full ${dotClass(e.color)} ${e.highlight ? "animate-pulse" : ""}`} />
+            <span className={`text-foreground/90 ${e.highlight ? "font-medium" : ""}`}>{e.msg}</span>
           </div>
         ))}
       </div>

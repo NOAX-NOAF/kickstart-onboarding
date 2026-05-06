@@ -70,6 +70,30 @@ export type OnboardedTenant = {
   logo: string | null;
 };
 
+export type ActivityEvent = {
+  id: string;
+  t: string;
+  color: "primary" | "amber" | "success";
+  msg: string;
+  highlight?: boolean;
+};
+
+function timestamp() {
+  const d = new Date();
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mm = String(d.getMinutes()).padStart(2, "0");
+  const ss = String(d.getSeconds()).padStart(2, "0");
+  return `${hh}:${mm}:${ss}`;
+}
+
+const seedFeed: ActivityEvent[] = [
+  { id: "s1", t: "06:07:04", color: "primary", msg: "Batchelors: UGC photo approved by Sarah Connolly" },
+  { id: "s2", t: "06:07:00", color: "primary", msg: "Three: Voucher batch claimed at Vodafone Arena (44 QRs)" },
+  { id: "s3", t: "06:06:56", color: "amber", msg: "Hunky Dorys: New campaign created by Aoife Byrne" },
+  { id: "s4", t: "06:06:42", color: "primary", msg: "Odlums: 12 redemptions processed at Dunnes Stillorgan" },
+  { id: "s5", t: "06:06:30", color: "primary", msg: "Platform: Master venue verified by field staff (Kehoe's Pub)" },
+];
+
 type Ctx = {
   screen: Screen;
   go: (s: Screen) => void;
@@ -78,6 +102,8 @@ type Ctx = {
   updateDraft: (patch: Partial<TenantDraft>) => void;
   onboardedTenants: OnboardedTenant[];
   activateTenant: () => void;
+  activity: ActivityEvent[];
+  pushActivity: (e: Omit<ActivityEvent, "id" | "t"> & { t?: string }) => void;
 };
 
 const DemoCtx = React.createContext<Ctx | null>(null);
@@ -86,6 +112,7 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
   const [screen, setScreen] = React.useState<Screen>("login");
   const [draft, setDraft] = React.useState<TenantDraft>(defaultDraft);
   const [onboardedTenants, setOnboardedTenants] = React.useState<OnboardedTenant[]>([]);
+  const [activity, setActivity] = React.useState<ActivityEvent[]>(seedFeed);
   const updateDraft = React.useCallback(
     (patch: Partial<TenantDraft>) => setDraft((d) => ({ ...d, ...patch })),
     [],
@@ -94,6 +121,15 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
     setScreen(s);
     if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
+  const pushActivity = React.useCallback(
+    (e: Omit<ActivityEvent, "id" | "t"> & { t?: string }) => {
+      setActivity((list) => [
+        { id: `e_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`, t: e.t ?? timestamp(), color: e.color, msg: e.msg, highlight: e.highlight },
+        ...list,
+      ].slice(0, 12));
+    },
+    [],
+  );
   const activateTenant = React.useCallback(() => {
     setOnboardedTenants((list) => {
       // avoid duplicate by slug
@@ -109,15 +145,24 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
         ...list,
       ];
     });
+    // Emit a sequence of activation events with staggered timestamps
+    const t = timestamp();
+    const events: ActivityEvent[] = [
+      { id: `act_${Date.now()}_3`, t, color: "success", msg: `Platform: ${draft.tradingName} tenant activated — ${draft.modulesEnabled} modules live`, highlight: true },
+      { id: `act_${Date.now()}_2`, t, color: "primary", msg: `${draft.brandName}: Brand provisioned with first voucher template` },
+      { id: `act_${Date.now()}_1`, t, color: "amber", msg: `${draft.tradingName}: Admin invite sent to ${draft.adminName} (${draft.adminEmail})` },
+    ];
+    setActivity((list) => [...events, ...list].slice(0, 12));
   }, [draft]);
   const reset = React.useCallback(() => {
     setScreen("login");
     setDraft(defaultDraft);
     setOnboardedTenants([]);
+    setActivity(seedFeed);
   }, []);
   return (
     <DemoCtx.Provider
-      value={{ screen, go, reset, draft, updateDraft, onboardedTenants, activateTenant }}
+      value={{ screen, go, reset, draft, updateDraft, onboardedTenants, activateTenant, activity, pushActivity }}
     >
       {children}
     </DemoCtx.Provider>
