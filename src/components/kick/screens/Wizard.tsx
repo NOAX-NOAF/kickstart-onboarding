@@ -4,7 +4,7 @@ import { AppShell } from "../AppShell";
 import { WizardProgress } from "../WizardProgress";
 import {
   ArrowLeft, ArrowRight, ChevronRight, Upload, Check, QrCode, Megaphone,
-  Package, ClipboardList, Camera, Smartphone, Monitor, Bell, Copy, Loader2,
+  Package, ClipboardList, Camera, Smartphone, Monitor, Bell, Copy, Loader2, Plus, X,
 } from "lucide-react";
 
 function Crumbs({ step }: { step: number }) {
