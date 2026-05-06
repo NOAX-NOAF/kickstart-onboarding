@@ -90,6 +90,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: appCss,
       },
+      { rel: "preconnect", href: "https://cdn.gpteng.co", crossOrigin: "anonymous" },
+      { rel: "dns-prefetch", href: "https://cdn.gpteng.co" },
     ],
   }),
   shellComponent: RootShell,
