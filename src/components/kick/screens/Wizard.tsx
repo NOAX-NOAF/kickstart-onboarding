@@ -4,7 +4,7 @@ import { AppShell } from "../AppShell";
 import { WizardProgress } from "../WizardProgress";
 import {
   ArrowLeft, ArrowRight, ChevronRight, Upload, Check, QrCode, Megaphone,
-  Package, ClipboardList, Camera, Smartphone, Monitor, Bell, Copy, Loader2,
+  Package, ClipboardList, Camera, Smartphone, Monitor, Bell, Copy, Loader2, Plus, X,
 } from "lucide-react";
 
 function Crumbs({ step }: { step: number }) {
@@ -365,6 +365,13 @@ export function Wiz4() {
 /* ------------------- STEP 5 ------------------- */
 export function Wiz5() {
   const { draft, updateDraft } = useDemo();
+  type ExtraUser = { id: string; name: string; email: string; role: string };
+  const [extras, setExtras] = React.useState<ExtraUser[]>([]);
+  const addUser = () =>
+    setExtras((u) => [...u, { id: `u_${Date.now()}`, name: "", email: "", role: "Brand Ops" }]);
+  const updateUser = (id: string, patch: Partial<ExtraUser>) =>
+    setExtras((u) => u.map((x) => (x.id === id ? { ...x, ...patch } : x)));
+  const removeUser = (id: string) => setExtras((u) => u.filter((x) => x.id !== id));
   return (
     <AppShell>
       <div className="max-w-5xl mx-auto">
@@ -405,7 +412,47 @@ export function Wiz5() {
             </Field>
           </div>
           <div className="mt-5">
-            <span className="text-xs text-muted-foreground/60 cursor-not-allowed">+ Add another user · You can add more after activation</span>
+            {extras.length > 0 && (
+              <div className="space-y-4 mb-4">
+                {extras.map((u, i) => (
+                  <div key={u.id} className="border rounded-lg p-4 bg-muted/20 relative">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Additional user {i + 1}</div>
+                      <button
+                        onClick={() => removeUser(u.id)}
+                        className="text-muted-foreground hover:text-destructive transition-colors"
+                        aria-label="Remove user"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <Field label="Name">
+                        <input value={u.name} onChange={(e) => updateUser(u.id, { name: e.target.value })} className={I} placeholder="Full name" />
+                      </Field>
+                      <Field label="Email">
+                        <input value={u.email} onChange={(e) => updateUser(u.id, { email: e.target.value })} className={I} placeholder="name@company.com" />
+                      </Field>
+                      <Field label="Role">
+                        <select value={u.role} onChange={(e) => updateUser(u.id, { role: e.target.value })} className={I}>
+                          <option>Tenant Admin</option><option>Brand Admin</option><option>Brand Ops</option><option>Field Manager</option>
+                        </select>
+                      </Field>
+                      <Field label="Brand scope">
+                        <select className={I}><option>All brands</option><option>{draft.brandName}</option></select>
+                      </Field>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            <button
+              onClick={addUser}
+              className="inline-flex items-center gap-1.5 text-sm text-primary font-medium hover:underline"
+            >
+              <Plus className="h-4 w-4" /> Add another user
+            </button>
+            <div className="text-[11px] text-muted-foreground mt-1">You can add more after activation</div>
           </div>
         </div>
         <NavButtons back="wiz-4" next="wiz-6" />
