@@ -1696,6 +1696,26 @@ export function BrandsList() {
 }
 
 function AddBrandDialog({ open, onClose, onSave }: { open: boolean; onClose: () => void; onSave: (b: Omit<Brand, "id">) => void }) {
+  const AB_BRANDS: { name: string; color: string; bg: string; tagline: string }[] = [
+    { name: "Budweiser", color: "#C8102E", bg: "#FFFFFF", tagline: "Dominant red + white system" },
+    { name: "Bud Light", color: "#0057B8", bg: "#FFFFFF", tagline: "Blue-centric modern sports palette" },
+    { name: "Michelob ULTRA", color: "#002B5C", bg: "#B9B7B5", tagline: "Navy + silver performance/lifestyle" },
+    { name: "Corona", color: "#0057A8", bg: "#F5C400", tagline: "Blue + gold beach/premium system" },
+    { name: "Stella Artois", color: "#C8102E", bg: "#D4AF37", tagline: "Red + gold European premium look" },
+    { name: "Beck's", color: "#000000", bg: "#D71920", tagline: "Black + red minimalist German styling" },
+    { name: "Leffe", color: "#2B1B17", bg: "#F2B233", tagline: "Dark brown + gold monastic premium" },
+    { name: "Hoegaarden", color: "#002D62", bg: "#D9E8F5", tagline: "Frosted blue-white Belgian wheat" },
+    { name: "Modelo Especial", color: "#003B6F", bg: "#F2C300", tagline: "Gold + royal blue" },
+    { name: "Busch Light", color: "#004B87", bg: "#C0C0C0", tagline: "Outdoor Americana blue/silver" },
+    { name: "Natural Light", color: "#0057B8", bg: "#D9D9D6", tagline: "Bright collegiate blue palette" },
+    { name: "Brahma", color: "#D71920", bg: "#F5C400", tagline: "Red + yellow carnival energy" },
+    { name: "Quilmes", color: "#0096D6", bg: "#FFFFFF", tagline: "Argentine flag-inspired cyan/white" },
+    { name: "Victoria", color: "#8B1E2D", bg: "#D4AF37", tagline: "Burgundy + gold heritage" },
+    { name: "Jupiler", color: "#D71920", bg: "#000000", tagline: "Aggressive red + black sports styling" },
+    { name: "Cass", color: "#005BAC", bg: "#FFD100", tagline: "Electric blue + yellow nightlife" },
+    { name: "Aguila", color: "#FFD100", bg: "#0057B8", tagline: "Yellow-led tropical identity" },
+  ];
+  const [preset, setPreset] = React.useState<string>("");
   const [name, setName] = React.useState("");
   const [tagline, setTagline] = React.useState("");
   const [color, setColor] = React.useState("#1e3a8a");
@@ -1703,7 +1723,7 @@ function AddBrandDialog({ open, onClose, onSave }: { open: boolean; onClose: () 
   const [logo, setLogo] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    if (!open) { setName(""); setTagline(""); setColor("#1e3a8a"); setBg("#E6F0FF"); setLogo(null); }
+    if (!open) { setPreset(""); setName(""); setTagline(""); setColor("#1e3a8a"); setBg("#E6F0FF"); setLogo(null); }
   }, [open]);
 
   if (!open) return null;
@@ -1717,6 +1737,16 @@ function AddBrandDialog({ open, onClose, onSave }: { open: boolean; onClose: () 
     reader.readAsDataURL(f);
   }
 
+  function handlePreset(value: string) {
+    setPreset(value);
+    if (value === "custom" || value === "") {
+      setName(""); setTagline(""); setColor("#1e3a8a"); setBg("#E6F0FF");
+      return;
+    }
+    const b = AB_BRANDS.find((x) => x.name === value);
+    if (b) { setName(b.name); setTagline(b.tagline); setColor(b.color); setBg(b.bg); }
+  }
+
   return (
     <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={onClose}>
       <div className="bg-card border rounded-xl shadow-2xl w-full max-w-lg p-6 animate-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
@@ -1726,6 +1756,16 @@ function AddBrandDialog({ open, onClose, onSave }: { open: boolean; onClose: () 
         </div>
 
         <div className="space-y-4">
+          <div>
+            <label className="text-xs font-medium text-muted-foreground">AB InBev brand preset</label>
+            <select value={preset} onChange={(e) => handlePreset(e.target.value)} className={I}>
+              <option value="">Select a brand…</option>
+              {AB_BRANDS.map((b) => <option key={b.name} value={b.name}>{b.name}</option>)}
+              <option value="custom">Other / custom brand…</option>
+            </select>
+            <p className="text-[11px] text-muted-foreground mt-1">Auto-fills HEX colours. You can override colours and must upload the logo.</p>
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-xs font-medium text-muted-foreground">Brand name</label>
