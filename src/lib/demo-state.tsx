@@ -14,7 +14,8 @@ export type Screen =
   | "campaigns-list"
   | "posm-list"
   | "field-evidence"
-  | "invite-team";
+  | "invite-team"
+  | "brands-list";
 
 export type TenantDraft = {
   legalName: string;
@@ -74,6 +75,16 @@ export type OnboardedTenant = {
   logo: string | null;
 };
 
+export type Brand = {
+  id: string;
+  name: string;
+  slug: string;
+  color: string;
+  bg: string;
+  tagline: string;
+  logo: string | null;
+};
+
 export type ActivityEvent = {
   id: string;
   t: string;
@@ -108,6 +119,8 @@ type Ctx = {
   activateTenant: () => void;
   activity: ActivityEvent[];
   pushActivity: (e: Omit<ActivityEvent, "id" | "t"> & { t?: string }) => void;
+  brands: Brand[];
+  addBrand: (b: Omit<Brand, "id">) => void;
 };
 
 const DemoCtx = React.createContext<Ctx | null>(null);
@@ -117,6 +130,33 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
   const [draft, setDraft] = React.useState<TenantDraft>(defaultDraft);
   const [onboardedTenants, setOnboardedTenants] = React.useState<OnboardedTenant[]>([]);
   const [activity, setActivity] = React.useState<ActivityEvent[]>(seedFeed);
+  const [brands, setBrands] = React.useState<Brand[]>([]);
+
+  // Seed first brand from draft on first read
+  const seededRef = React.useRef(false);
+  React.useEffect(() => {
+    if (seededRef.current) return;
+    seededRef.current = true;
+    setBrands([
+      {
+        id: "b_seed",
+        name: draft.brandName,
+        slug: draft.brandSlug,
+        color: draft.brandColor,
+        bg: draft.brandBg,
+        tagline: draft.brandTagline,
+        logo: draft.brandLogo,
+      },
+    ]);
+  }, [draft.brandName, draft.brandSlug, draft.brandColor, draft.brandBg, draft.brandTagline, draft.brandLogo]);
+
+  const addBrand = React.useCallback((b: Omit<Brand, "id">) => {
+    setBrands((list) => [...list, { ...b, id: `b_${Date.now()}` }]);
+    setActivity((list) => [
+      { id: `br_${Date.now()}`, t: timestamp(), color: "success", msg: `${b.name}: New brand added`, highlight: true },
+      ...list,
+    ].slice(0, 12));
+  }, []);
   const updateDraft = React.useCallback(
     (patch: Partial<TenantDraft>) => setDraft((d) => ({ ...d, ...patch })),
     [],
@@ -163,10 +203,12 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
     setDraft(defaultDraft);
     setOnboardedTenants([]);
     setActivity(seedFeed);
+    setBrands([]);
+    seededRef.current = false;
   }, []);
   return (
     <DemoCtx.Provider
-      value={{ screen, go, reset, draft, updateDraft, onboardedTenants, activateTenant, activity, pushActivity }}
+      value={{ screen, go, reset, draft, updateDraft, onboardedTenants, activateTenant, activity, pushActivity, brands, addBrand }}
     >
       {children}
     </DemoCtx.Provider>
