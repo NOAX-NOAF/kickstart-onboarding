@@ -51,8 +51,8 @@ function Kpi({ label, value }: { label: string; value: number }) {
 /* ------------------- TENANT DASHBOARD ------------------- */
 export function TenantDashboard() {
   const { go, draft } = useDemo();
-  const c1 = draft.brandColor;
-  const c2 = draft.brandBg;
+  const c1 = draft.tenantColor;
+  const c2 = draft.tenantBg;
   return (
     <AppShell context="tenant">
       <div className="max-w-7xl mx-auto">
