@@ -222,14 +222,25 @@ function slugify(s: string) {
 
 /* ------------------- CAMPAIGN STEP 1 ------------------- */
 export function Camp1() {
-  const { draft } = useDemo();
-  const [name, setName] = React.useState(`${draft.brandName} Champions League`);
-  const [slug, setSlug] = React.useState(slugify(`${draft.brandName} Champions League`));
+  const { draft, brands, currentUser } = useDemo();
+  const allowedBrands = React.useMemo(() => {
+    const list = brands.length ? brands.map((b) => b.name) : [draft.brandName];
+    if (currentUser.allowedBrands === "all") return list;
+    return list.filter((n) => (currentUser.allowedBrands as string[]).includes(n));
+  }, [brands, draft.brandName, currentUser.allowedBrands]);
+  const [brand, setBrand] = React.useState<string>(allowedBrands[0] ?? draft.brandName);
+  React.useEffect(() => {
+    if (!allowedBrands.includes(brand) && allowedBrands[0]) setBrand(allowedBrands[0]);
+  }, [allowedBrands, brand]);
+  const [name, setName] = React.useState(`${brand} Champions League`);
+  const [slug, setSlug] = React.useState(slugify(`${brand} Champions League`));
   const [slugDirty, setSlugDirty] = React.useState(false);
   function onName(v: string) {
     setName(v);
     if (!slugDirty) setSlug(slugify(v));
   }
+  const locked = allowedBrands.length <= 1;
+  const noAccess = allowedBrands.length === 0;
   return (
     <AppShell context="tenant">
       <div className="max-w-3xl mx-auto">
@@ -242,8 +253,25 @@ export function Camp1() {
           <Field label="Slug" hint={`kick.app/c/${slug}`}>
             <input value={slug} onChange={(e) => { setSlug(e.target.value); setSlugDirty(true); }} className={I + " font-mono"} />
           </Field>
-          <Field label="Brand" hint={`Locked — ${draft.brandName} is the only brand under ${draft.tradingName}`}>
-            <select disabled className={I + " opacity-70"}><option>{draft.brandName}</option></select>
+          <Field
+            label="Brand"
+            hint={
+              noAccess
+                ? `Your role (${currentUser.role}) has no brand permissions assigned`
+                : locked
+                  ? `Locked — ${currentUser.role} has access to ${allowedBrands[0]} only`
+                  : `${currentUser.role} — choose from ${allowedBrands.length} permitted brand${allowedBrands.length === 1 ? "" : "s"}`
+            }
+          >
+            <select
+              value={brand}
+              onChange={(e) => setBrand(e.target.value)}
+              disabled={locked || noAccess}
+              className={I + (locked || noAccess ? " opacity-70" : "")}
+            >
+              {noAccess && <option value="">— No brands available —</option>}
+              {allowedBrands.map((b) => <option key={b} value={b}>{b}</option>)}
+            </select>
           </Field>
           <Field label="Reward type">
             <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
@@ -255,7 +283,7 @@ export function Camp1() {
               ))}
             </div>
           </Field>
-          <Field label="Reward description"><input defaultValue={`Free ${draft.brandName} on matchday at participating venues`} className={I} /></Field>
+          <Field label="Reward description"><input defaultValue={`Free ${brand} on matchday at participating venues`} className={I} /></Field>
         </div>
         <CampNav back={null} next="camp-2" />
       </div>
