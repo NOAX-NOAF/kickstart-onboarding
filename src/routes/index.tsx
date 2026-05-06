@@ -29,10 +29,15 @@ function ScreenRouter() {
 
   // On mobile, restrict the experience to the Rep Portal only.
   React.useEffect(() => {
-    if (isMobile && screen !== "rep-portal" && screen !== "login") {
+    if (isMobile === true && screen !== "rep-portal" && screen !== "login") {
       go("rep-portal");
     }
   }, [isMobile, screen, go]);
+
+  // Wait for viewport detection to avoid flashing the desktop screen on mobile.
+  if (isMobile === undefined) {
+    return null;
+  }
 
   if (isMobile && screen !== "login") {
     return <RepPortal />;
