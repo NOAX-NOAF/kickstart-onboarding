@@ -415,24 +415,27 @@ export function Wiz5() {
 }
 
 /* ------------------- STEP 6 ------------------- */
-const checklist = [
-  "Tenant record created", "Brand record created with branding", "8 modules enabled",
-  "API key activated", "Mark Dunne invited (email queued)",
-  "First voucher template provisioned", "Welcome dashboard ready",
-];
-
-function SummaryCard({ title, body }: { title: string; body: string }) {
+function SummaryCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="border rounded-lg p-4 bg-muted/30">
       <div className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-1">{title}</div>
-      <div className="text-sm">{body}</div>
+      <div className="text-sm">{children}</div>
     </div>
   );
 }
 
 export function Wiz6() {
-  const { go } = useDemo();
+  const { go, draft } = useDemo();
   const [activating, setActivating] = React.useState(false);
+  const checklist = [
+    `Tenant record created (${draft.tradingName})`,
+    `Brand record created (${draft.brandName})`,
+    `${draft.modulesEnabled} modules enabled`,
+    draft.apiKeyGenerated ? "API key activated" : "API key pending",
+    `${draft.adminName} invited (email queued)`,
+    "First voucher template provisioned",
+    "Welcome dashboard ready",
+  ];
   function activate() {
     setActivating(true);
     setTimeout(() => go("activated"), 1400);
@@ -445,11 +448,36 @@ export function Wiz6() {
         <p className="text-sm text-muted-foreground mt-1 mb-8">Step 6 of 6: Review & activate. Everything looks good? Activate ABInBev to make Kick live for them.</p>
         <WizardProgress step={6} />
         <div className="bg-card border rounded-xl p-6 space-y-3">
-          <SummaryCard title="Tenant" body="AB InBev — slug: abinbev — primary contact: Mark Dunne — colour: navy" />
-          <SummaryCard title="Brand" body="Budweiser — colour: navy — tagline: King of Beers — logo: ✓ uploaded" />
-          <SummaryCard title="Modules" body="8 enabled (QR Redemption, Campaigns, POSM, POS Jobs, Field Evidence, Consumer Preview, Staff PWA, Alerts)" />
-          <SummaryCard title="Integrations" body="API key generated, Slack webhook configured, settlement bank set" />
-          <SummaryCard title="Admin user" body="Mark Dunne (Tenant Admin) — invitation will be sent" />
+          <SummaryCard title="Tenant">
+            <div className="flex items-center gap-3">
+              <span className="h-5 w-5 rounded border" style={{ background: draft.tenantColor }} />
+              <span>
+                <span className="font-medium">{draft.tradingName}</span> — slug: <span className="font-mono text-xs">{draft.slug}</span> — primary contact: {draft.contactName} ({draft.contactEmail})
+              </span>
+            </div>
+          </SummaryCard>
+          <SummaryCard title="Brand">
+            <div className="flex items-center gap-3">
+              {draft.brandLogo ? (
+                <img src={draft.brandLogo} alt="logo" className="h-8 w-8 rounded border bg-white object-contain" />
+              ) : (
+                <span className="h-5 w-5 rounded border" style={{ background: draft.brandColor }} />
+              )}
+              <span>
+                <span className="font-medium">{draft.brandName}</span> — tagline: "{draft.brandTagline}" — logo: {draft.brandLogo ? "✓ uploaded" : "— none"}
+              </span>
+            </div>
+          </SummaryCard>
+          <SummaryCard title="Modules">
+            {draft.modulesEnabled} enabled (QR Redemption, Campaigns, POSM, POS Jobs, Field Evidence, Consumer Preview, Staff PWA, Alerts)
+          </SummaryCard>
+          <SummaryCard title="Integrations">
+            API key {draft.apiKeyGenerated ? "generated" : "not generated"}, settlement bank set
+            {draft.venuesImported > 0 ? `, ${draft.venuesImported} venues imported` : ""}
+          </SummaryCard>
+          <SummaryCard title="Admin user">
+            {draft.adminName} ({draft.adminRole}) — {draft.adminEmail} — invitation will be sent
+          </SummaryCard>
 
           <div className="mt-5 pt-5 border-t">
             <div className="text-sm font-semibold mb-3">When you activate:</div>
@@ -472,7 +500,7 @@ export function Wiz6() {
             disabled={activating}
             className="inline-flex items-center gap-1.5 h-12 px-7 rounded-md bg-primary text-primary-foreground text-base font-semibold hover:opacity-90 transition-all hover:-translate-y-0.5 disabled:opacity-70"
           >
-            {activating ? (<><Loader2 className="h-4 w-4 animate-spin" /> Activating tenant…</>) : "Activate ABInBev →"}
+            {activating ? (<><Loader2 className="h-4 w-4 animate-spin" /> Activating tenant…</>) : `Activate ${draft.tradingName} →`}
           </button>
         </div>
       </div>
@@ -482,7 +510,7 @@ export function Wiz6() {
 
 /* ------------------- ACTIVATION SUCCESS ------------------- */
 export function Activated() {
-  const { go } = useDemo();
+  const { go, draft } = useDemo();
   const [switching, setSwitching] = React.useState(false);
   function continueAsMark() {
     setSwitching(true);
@@ -494,14 +522,14 @@ export function Activated() {
         <div className="mx-auto h-16 w-16 rounded-full bg-primary text-primary-foreground flex items-center justify-center mb-5 animate-in zoom-in duration-700">
           <Check className="h-8 w-8" />
         </div>
-        <h1 className="text-2xl font-bold tracking-tight">ABInBev is live on Kick.</h1>
-        <p className="text-sm text-muted-foreground mt-2">Mark Dunne has been invited. Now let's set up Budweiser's first campaign.</p>
+        <h1 className="text-2xl font-bold tracking-tight">{draft.tradingName} is live on Kick.</h1>
+        <p className="text-sm text-muted-foreground mt-2">{draft.adminName} has been invited. Now let's set up {draft.brandName}'s first campaign.</p>
         <button
           onClick={continueAsMark}
           disabled={switching}
           className="mt-7 w-full h-11 rounded-md bg-primary text-primary-foreground font-semibold text-sm hover:opacity-90 transition-all hover:-translate-y-0.5 inline-flex items-center justify-center gap-2 disabled:opacity-70"
         >
-          {switching ? (<><Loader2 className="h-4 w-4 animate-spin" /> Switching context…</>) : "Continue as Mark Dunne →"}
+          {switching ? (<><Loader2 className="h-4 w-4 animate-spin" /> Switching context…</>) : `Continue as ${draft.adminName} →`}
         </button>
         <p className="text-[11px] text-muted-foreground mt-4">You'll impersonate the tenant admin to walk through their first campaign.</p>
       </div>
