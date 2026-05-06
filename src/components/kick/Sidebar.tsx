@@ -75,7 +75,11 @@ export function Sidebar({ context = "platform" }: { context?: "platform" | "tena
                   <button
                     key={item.label}
                     onClick={() => item.screen && go(item.screen)}
-                    className={`w-full flex items-center gap-2.5 px-2 py-1.5 rounded-md text-sm transition-colors hover:bg-white/5 ${item.screen ? "cursor-pointer" : "cursor-default opacity-70"}`}
+                    onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = "var(--kick-sidebar-hover)"; }}
+                    onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = ""; }}
+                    onFocus={(e) => { if (!isActive) e.currentTarget.style.background = "var(--kick-sidebar-hover)"; }}
+                    onBlur={(e) => { if (!isActive) e.currentTarget.style.background = ""; }}
+                    className={`w-full flex items-center gap-2.5 px-2 py-1.5 rounded-md text-sm transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-white/30 ${item.screen ? "cursor-pointer" : "cursor-default opacity-70"}`}
                     style={isActive ? { background: "var(--kick-sidebar-active)" } : undefined}
                   >
                     <item.icon className="h-4 w-4 opacity-80" />
@@ -88,7 +92,11 @@ export function Sidebar({ context = "platform" }: { context?: "platform" | "tena
         ))}
       </nav>
       <div className="border-t border-white/10 p-3">
-        <button className="w-full flex items-center justify-between text-sm px-2 py-1.5 rounded-md hover:bg-white/5 transition-colors">
+        <button
+          onMouseEnter={(e) => { e.currentTarget.style.background = "var(--kick-sidebar-hover)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = ""; }}
+          className="w-full flex items-center justify-between text-sm px-2 py-1.5 rounded-md transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-white/30"
+        >
           <span>Rep Portal</span>
           <ExternalLink className="h-3.5 w-3.5" />
         </button>
