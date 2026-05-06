@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
+import * as React from "react";
 import { DemoProvider, useDemo } from "@/lib/demo-state";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Login } from "@/components/kick/screens/Login";
 import { OpsDesk } from "@/components/kick/screens/OpsDesk";
 import {
@@ -22,7 +24,19 @@ export const Route = createFileRoute("/")({
 });
 
 function ScreenRouter() {
-  const { screen } = useDemo();
+  const { screen, go } = useDemo();
+  const isMobile = useIsMobile();
+
+  // On mobile, restrict the experience to the Rep Portal only.
+  React.useEffect(() => {
+    if (isMobile && screen !== "rep-portal" && screen !== "login") {
+      go("rep-portal");
+    }
+  }, [isMobile, screen, go]);
+
+  if (isMobile && screen !== "login") {
+    return <RepPortal />;
+  }
   switch (screen) {
     case "login": return <Login />;
     case "ops-desk": return <OpsDesk />;
