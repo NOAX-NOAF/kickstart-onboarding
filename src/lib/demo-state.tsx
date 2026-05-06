@@ -152,10 +152,16 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
 
   const addBrand = React.useCallback((b: Omit<Brand, "id">) => {
     setBrands((list) => [...list, { ...b, id: `b_${Date.now()}` }]);
-    setActivity((list) => [
-      { id: `br_${Date.now()}`, t: timestamp(), color: "success", msg: `${b.name}: New brand added`, highlight: true },
-      ...list,
-    ].slice(0, 12));
+    setActivity((list) => {
+      const ev: ActivityEvent = {
+        id: `br_${Date.now()}`,
+        t: timestamp(),
+        color: "success",
+        msg: `${b.name}: New brand added`,
+        highlight: true,
+      };
+      return [ev, ...list].slice(0, 12);
+    });
   }, []);
   const updateDraft = React.useCallback(
     (patch: Partial<TenantDraft>) => setDraft((d) => ({ ...d, ...patch })),
