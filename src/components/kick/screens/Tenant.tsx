@@ -545,20 +545,17 @@ function ProductTile({ name, brand, price, img, qty, onInc, onDec }: { name: str
 }
 
 export function RepPortal() {
-  const { go, brands } = useDemo();
+  const { go, brands, repOrders, addRepOrder, updateRepOrder } = useDemo();
+  const repName = "Aoife Byrne";
   const [tab, setTab] = React.useState<"catalogue" | "basket" | "orders" | "verify">("catalogue");
   const [brandFilter, setBrandFilter] = React.useState<string>("All brands");
   const [posType, setPosType] = React.useState("All POS types");
   const [search, setSearch] = React.useState("");
   const [venue, setVenue] = React.useState(repVenues[0]);
   const [basket, setBasket] = React.useState<RepBasket>({});
-  const [orders, setOrders] = React.useState<RepOrder[]>([
-    { id: "REP-2891", venue: "Kehoe's Pub", items: 4, total: 142.0, status: "Verified", date: "2 days ago" },
-    { id: "REP-2887", venue: "The Long Hall", items: 2, total: 64.5, status: "Awaiting verification", date: "5 days ago" },
-    { id: "REP-2851", venue: "O'Donoghue's", items: 6, total: 287.0, status: "Delivered", date: "1 week ago" },
-  ]);
   const [tip, setTip] = React.useState(true);
   const [verifyOrder, setVerifyOrder] = React.useState<RepOrder | null>(null);
+  const orders = repOrders;
 
   const allBrandNames = ["All brands", ...Array.from(new Set([...brands.map((b) => b.name), ...repCatalogue.map((p) => p.brand)]))];
   const filtered = repCatalogue.filter((p) =>
@@ -579,9 +576,17 @@ export function RepPortal() {
 
   function placeOrder() {
     if (basketEntries.length === 0) return;
-    const id = `REP-${Math.floor(Math.random() * 9000) + 1000}`;
-    const ord: RepOrder = { id, venue, items: basketCount, total: basketTotal, status: "Awaiting verification", date: "Just now" };
-    setOrders((o) => [ord, ...o]);
+    const dominantBrand = basketEntries[0]?.brand;
+    const id = addRepOrder({
+      venue,
+      rep: repName,
+      items: basketCount,
+      total: basketTotal,
+      status: "Awaiting verification",
+      date: "Just now",
+      brand: dominantBrand,
+    });
+    const ord: RepOrder = { id, venue, rep: repName, items: basketCount, total: basketTotal, status: "Awaiting verification", date: "Just now", brand: dominantBrand };
     setBasket({});
     setTab("verify");
     setVerifyOrder(ord);
