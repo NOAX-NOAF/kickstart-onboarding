@@ -8,6 +8,7 @@ import {
 import {
   TenantDashboard, Camp1, Camp2, Camp3, Camp4, CampLive,
   PosmBuilder, PosmStatus, FinalDashboard,
+  CampaignsList, PosmList, FieldEvidence, InviteTeam,
 } from "@/components/kick/screens/Tenant";
 
 export const Route = createFileRoute("/")({
@@ -41,6 +42,10 @@ function ScreenRouter() {
     case "posm-builder": return <PosmBuilder />;
     case "posm-status": return <PosmStatus />;
     case "final-dashboard": return <FinalDashboard />;
+    case "campaigns-list": return <CampaignsList />;
+    case "posm-list": return <PosmList />;
+    case "field-evidence": return <FieldEvidence />;
+    case "invite-team": return <InviteTeam />;
     default: return <Login />;
   }
 }
