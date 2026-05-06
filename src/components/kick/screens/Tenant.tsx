@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useDemo, type Brand } from "@/lib/demo-state";
+import { useDemo, type Brand, type RepOrder } from "@/lib/demo-state";
 import { AppShell } from "../AppShell";
 import {
   Megaphone, Package, Users, ArrowRight, Check, Plus, Minus, Loader2,
