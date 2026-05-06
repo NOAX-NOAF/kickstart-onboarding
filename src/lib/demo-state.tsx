@@ -147,12 +147,12 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
     });
     // Emit a sequence of activation events with staggered timestamps
     const t = timestamp();
-    setActivity((list) => [
+    const events: ActivityEvent[] = [
       { id: `act_${Date.now()}_3`, t, color: "success", msg: `Platform: ${draft.tradingName} tenant activated — ${draft.modulesEnabled} modules live`, highlight: true },
       { id: `act_${Date.now()}_2`, t, color: "primary", msg: `${draft.brandName}: Brand provisioned with first voucher template` },
       { id: `act_${Date.now()}_1`, t, color: "amber", msg: `${draft.tradingName}: Admin invite sent to ${draft.adminName} (${draft.adminEmail})` },
-      ...list,
-    ].slice(0, 12));
+    ];
+    setActivity((list) => [...events, ...list].slice(0, 12));
   }, [draft]);
   const reset = React.useCallback(() => {
     setScreen("login");
