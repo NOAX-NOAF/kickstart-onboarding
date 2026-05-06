@@ -155,20 +155,21 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
   const addRepOrder = React.useCallback((o: Omit<RepOrder, "id">) => {
     const id = `REP-${Math.floor(Math.random() * 9000) + 1000}`;
     setRepOrders((list) => [{ ...o, id }, ...list]);
-    setActivity((list) => [
-      { id: `ro_${Date.now()}`, t: timestamp(), color: "amber", msg: `${o.brand ?? "Field"}: Rep ${o.rep} placed order ${id} for ${o.venue} — awaiting admin sign-off`, highlight: true },
-      ...list,
-    ].slice(0, 12));
+    setActivity((list) => {
+      const ev: ActivityEvent = { id: `ro_${Date.now()}`, t: timestamp(), color: "amber", msg: `${o.brand ?? "Field"}: Rep ${o.rep} placed order ${id} for ${o.venue} — awaiting admin sign-off`, highlight: true };
+      return [ev, ...list].slice(0, 12);
+    });
     return id;
   }, []);
 
   const updateRepOrder = React.useCallback((id: string, patch: Partial<RepOrder>) => {
     setRepOrders((list) => list.map((o) => (o.id === id ? { ...o, ...patch } : o)));
     if (patch.status) {
-      setActivity((list) => [
-        { id: `ru_${Date.now()}`, t: timestamp(), color: patch.status === "Approved" ? "success" : "primary", msg: `Rep order ${id}: ${patch.status}` },
-        ...list,
-      ].slice(0, 12));
+      const color: ActivityEvent["color"] = patch.status === "Approved" ? "success" : "primary";
+      setActivity((list) => {
+        const ev: ActivityEvent = { id: `ru_${Date.now()}`, t: timestamp(), color, msg: `Rep order ${id}: ${patch.status}` };
+        return [ev, ...list].slice(0, 12);
+      });
     }
   }, []);
 
