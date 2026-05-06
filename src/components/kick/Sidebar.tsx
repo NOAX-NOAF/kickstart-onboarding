@@ -93,6 +93,7 @@ export function Sidebar({ context = "platform" }: { context?: "platform" | "tena
       </nav>
       <div className="border-t border-white/10 p-3">
         <button
+          onClick={() => go("rep-portal")}
           onMouseEnter={(e) => { e.currentTarget.style.background = "var(--kick-sidebar-hover)"; }}
           onMouseLeave={(e) => { e.currentTarget.style.background = ""; }}
           className="w-full flex items-center justify-between text-sm px-2 py-1.5 rounded-md transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-white/30"
