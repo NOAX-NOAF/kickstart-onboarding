@@ -42,9 +42,9 @@ function Kpi({ label, value, suffix, spark }: { label: string; value: number; su
 }
 
 const tenants = [
-  { name: "AB InBev", brands: "1 (Budweiser)", modules: 8 },
-  { name: "C&C Group", brands: "1 (Bulmers)", modules: 8 },
   { name: "Valeo Foods", brands: "4 (Batchelors, Odlums, Chef, Bollingers)", modules: 6 },
+  { name: "Three Ireland", brands: "1 (Three)", modules: 7 },
+  { name: "Hunky Dorys", brands: "1 (Hunky Dorys)", modules: 6 },
 ];
 
 const services = [
@@ -53,10 +53,10 @@ const services = [
 ];
 
 const baseFeed = [
-  { t: "06:07:04", color: "primary", msg: "Bulmers: UGC photo approved by Sarah Connolly" },
-  { t: "06:07:00", color: "primary", msg: "Budweiser: Voucher batch claimed at The Porterhouse (44 QRs)" },
-  { t: "06:06:56", color: "amber", msg: "Budweiser: New campaign created by Mark Dunne" },
-  { t: "06:06:42", color: "primary", msg: "Batchelors: 12 redemptions processed at Dunnes Stillorgan" },
+  { t: "06:07:04", color: "primary", msg: "Batchelors: UGC photo approved by Sarah Connolly" },
+  { t: "06:07:00", color: "primary", msg: "Three: Voucher batch claimed at Vodafone Arena (44 QRs)" },
+  { t: "06:06:56", color: "amber", msg: "Hunky Dorys: New campaign created by Aoife Byrne" },
+  { t: "06:06:42", color: "primary", msg: "Odlums: 12 redemptions processed at Dunnes Stillorgan" },
   { t: "06:06:30", color: "primary", msg: "Platform: Master venue verified by field staff (Kehoe's Pub)" },
 ];
 

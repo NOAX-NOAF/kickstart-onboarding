@@ -49,17 +49,29 @@ function Field({ label, children, hint }: { label: string; children: React.React
 
 const I = "h-10 w-full px-3 rounded-md border bg-background text-sm focus:ring-2 focus:ring-ring outline-none transition-all";
 
-function ColorSwatch({ value }: { value: string }) {
+function ColorSwatch({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   return (
     <div className="flex items-center gap-2">
-      <div className="h-10 w-10 rounded-md border" style={{ background: value }} />
-      <input defaultValue={value} className={I + " font-mono text-xs"} />
+      <label className="relative h-10 w-10 rounded-md border cursor-pointer overflow-hidden" style={{ background: value }}>
+        <input
+          type="color"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="absolute inset-0 opacity-0 cursor-pointer"
+        />
+      </label>
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={I + " font-mono text-xs"}
+      />
     </div>
   );
 }
 
 /* ------------------- STEP 1 ------------------- */
 export function Wiz1() {
+  const { draft, updateDraft } = useDemo();
   return (
     <AppShell>
       <div className="max-w-5xl mx-auto">
@@ -69,14 +81,28 @@ export function Wiz1() {
         <WizardProgress step={1} />
         <div className="bg-card border rounded-xl p-6 max-w-3xl">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <Field label="Legal name"><input defaultValue="AB InBev Ireland Limited" className={I} /></Field>
-            <Field label="Trading name (display in Kick)"><input defaultValue="AB InBev" className={I} /></Field>
-            <Field label="Slug (URL-safe)" hint="kick.app/abinbev"><input defaultValue="abinbev" className={I + " font-mono"} /></Field>
+            <Field label="Legal name">
+              <input value={draft.legalName} onChange={(e) => updateDraft({ legalName: e.target.value })} className={I} />
+            </Field>
+            <Field label="Trading name (display in Kick)">
+              <input value={draft.tradingName} onChange={(e) => updateDraft({ tradingName: e.target.value })} className={I} />
+            </Field>
+            <Field label="Slug (URL-safe)" hint={`kick.app/${draft.slug}`}>
+              <input value={draft.slug} onChange={(e) => updateDraft({ slug: e.target.value })} className={I + " font-mono"} />
+            </Field>
             <div />
-            <Field label="Primary contact name"><input defaultValue="Mark Dunne" className={I} /></Field>
-            <Field label="Primary contact email"><input defaultValue="mark.dunne@ab-inbev.com" className={I} /></Field>
-            <Field label="Tenant brand colour"><ColorSwatch value="#003087" /></Field>
-            <Field label="Tenant brand background"><ColorSwatch value="#E6F0FF" /></Field>
+            <Field label="Primary contact name">
+              <input value={draft.contactName} onChange={(e) => updateDraft({ contactName: e.target.value })} className={I} />
+            </Field>
+            <Field label="Primary contact email">
+              <input value={draft.contactEmail} onChange={(e) => updateDraft({ contactEmail: e.target.value })} className={I} />
+            </Field>
+            <Field label="Tenant brand colour">
+              <ColorSwatch value={draft.tenantColor} onChange={(v) => updateDraft({ tenantColor: v })} />
+            </Field>
+            <Field label="Tenant brand background">
+              <ColorSwatch value={draft.tenantBg} onChange={(v) => updateDraft({ tenantBg: v })} />
+            </Field>
           </div>
         </div>
         <NavButtons next="wiz-2" />
@@ -87,36 +113,73 @@ export function Wiz1() {
 
 /* ------------------- STEP 2 ------------------- */
 export function Wiz2() {
-  const [uploaded, setUploaded] = React.useState(false);
+  const { draft, updateDraft } = useDemo();
+  const fileRef = React.useRef<HTMLInputElement>(null);
+  const uploaded = !!draft.brandLogo;
+
+  function handleFile(file: File) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      updateDraft({ brandLogo: reader.result as string, brandLogoName: file.name });
+    };
+    reader.readAsDataURL(file);
+  }
+
+  const initial = (draft.brandName.trim()[0] || "B").toUpperCase();
+
   return (
     <AppShell>
       <div className="max-w-6xl mx-auto">
         <Crumbs step={2} />
         <h1 className="text-2xl font-bold tracking-tight">Onboard new tenant</h1>
-        <p className="text-sm text-muted-foreground mt-1 mb-8">Step 2 of 6: First brand. Add the first brand under AB InBev. You can add more later.</p>
+        <p className="text-sm text-muted-foreground mt-1 mb-8">Step 2 of 6: First brand. Add the first brand under {draft.tradingName}. You can add more later.</p>
         <WizardProgress step={2} />
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
           <div className="lg:col-span-3 bg-card border rounded-xl p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <Field label="Brand name"><input defaultValue="Budweiser" className={I} /></Field>
-              <Field label="Slug"><input defaultValue="budweiser" className={I + " font-mono"} /></Field>
-              <Field label="Brand colour"><ColorSwatch value="#003087" /></Field>
-              <Field label="Brand bg colour"><ColorSwatch value="#E6F0FF" /></Field>
-              <div className="md:col-span-2"><Field label="Tagline"><input defaultValue="King of Beers" className={I} /></Field></div>
+              <Field label="Brand name">
+                <input value={draft.brandName} onChange={(e) => updateDraft({ brandName: e.target.value })} className={I} />
+              </Field>
+              <Field label="Slug">
+                <input value={draft.brandSlug} onChange={(e) => updateDraft({ brandSlug: e.target.value })} className={I + " font-mono"} />
+              </Field>
+              <Field label="Brand colour">
+                <ColorSwatch value={draft.brandColor} onChange={(v) => updateDraft({ brandColor: v })} />
+              </Field>
+              <Field label="Brand bg colour">
+                <ColorSwatch value={draft.brandBg} onChange={(v) => updateDraft({ brandBg: v })} />
+              </Field>
+              <div className="md:col-span-2">
+                <Field label="Tagline">
+                  <input value={draft.brandTagline} onChange={(e) => updateDraft({ brandTagline: e.target.value })} className={I} />
+                </Field>
+              </div>
               <div className="md:col-span-2">
                 <label className="text-xs font-medium text-muted-foreground">Brand logo</label>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/png,image/svg+xml,image/jpeg"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) handleFile(f);
+                  }}
+                />
                 <button
-                  onClick={() => setUploaded(true)}
+                  onClick={() => fileRef.current?.click()}
                   className={`mt-1 w-full h-32 rounded-md border-2 border-dashed flex flex-col items-center justify-center gap-2 transition-all ${
                     uploaded ? "border-primary bg-accent/30" : "hover:border-primary/50 hover:bg-muted/40"
                   }`}
                 >
                   {uploaded ? (
                     <div className="flex items-center gap-3">
-                      <div className="h-12 w-12 rounded-full text-white font-bold text-xl flex items-center justify-center" style={{ background: "#003087" }}>B</div>
+                      <div className="h-12 w-12 rounded-full overflow-hidden border bg-white flex items-center justify-center">
+                        <img src={draft.brandLogo!} alt="logo" className="h-full w-full object-contain" />
+                      </div>
                       <div className="text-left">
-                        <div className="text-sm font-medium inline-flex items-center gap-1.5"><Check className="h-4 w-4 text-primary" /> budweiser-logo.png</div>
-                        <div className="text-xs text-muted-foreground">42 KB · uploaded</div>
+                        <div className="text-sm font-medium inline-flex items-center gap-1.5"><Check className="h-4 w-4 text-primary" /> {draft.brandLogoName}</div>
+                        <div className="text-xs text-muted-foreground">uploaded · click to replace</div>
                       </div>
                     </div>
                   ) : (
@@ -128,24 +191,37 @@ export function Wiz2() {
                   )}
                 </button>
               </div>
-              <div className="md:col-span-2"><Field label="Primary contact at this brand"><input defaultValue="Mark Dunne / mark.dunne@ab-inbev.com" className={I} /></Field></div>
+              <div className="md:col-span-2">
+                <Field label="Primary contact at this brand">
+                  <input
+                    defaultValue={`${draft.contactName} / ${draft.contactEmail}`}
+                    className={I}
+                  />
+                </Field>
+              </div>
             </div>
           </div>
           <div className="lg:col-span-2">
             <div className="text-xs font-medium text-muted-foreground mb-2">Live consumer preview</div>
             <div className="bg-card border rounded-xl overflow-hidden shadow-sm">
-              <div className="p-6 text-white" style={{ background: "#003087" }}>
+              <div className="p-6 text-white" style={{ background: draft.brandColor }}>
                 <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-full bg-white text-[#003087] font-bold text-xl flex items-center justify-center">B</div>
+                  <div className="h-12 w-12 rounded-full bg-white font-bold text-xl flex items-center justify-center overflow-hidden" style={{ color: draft.brandColor }}>
+                    {draft.brandLogo ? (
+                      <img src={draft.brandLogo} alt="logo" className="h-full w-full object-contain" />
+                    ) : (
+                      initial
+                    )}
+                  </div>
                   <div>
-                    <div className="font-bold text-lg">Budweiser</div>
-                    <div className="text-xs opacity-80">King of Beers</div>
+                    <div className="font-bold text-lg">{draft.brandName || "Brand name"}</div>
+                    <div className="text-xs opacity-80">{draft.brandTagline}</div>
                   </div>
                 </div>
               </div>
-              <div className="p-6" style={{ background: "#E6F0FF" }}>
-                <div className="text-sm text-[#003087] mb-3">Scan, claim, redeem at the bar.</div>
-                <button className="w-full h-11 rounded-md text-white font-semibold text-sm" style={{ background: "#003087" }}>Claim Your Voucher</button>
+              <div className="p-6" style={{ background: draft.brandBg }}>
+                <div className="text-sm mb-3" style={{ color: draft.brandColor }}>Scan, claim, redeem at the bar.</div>
+                <button className="w-full h-11 rounded-md text-white font-semibold text-sm" style={{ background: draft.brandColor }}>Claim Your Voucher</button>
               </div>
             </div>
           </div>
@@ -213,9 +289,10 @@ export function Wiz3() {
 
 /* ------------------- STEP 4 ------------------- */
 export function Wiz4() {
-  const [keyGen, setKeyGen] = React.useState(false);
-  const [csvDone, setCsvDone] = React.useState(false);
-  const apiKey = "kick_pk_abinbev_3f7a9c2e1b4d8";
+  const { draft, updateDraft } = useDemo();
+  const keyGen = draft.apiKeyGenerated;
+  const csvDone = draft.venuesImported > 0;
+  const apiKey = `kick_pk_${draft.slug}_3f7a9c2e1b4d8`;
   return (
     <AppShell>
       <div className="max-w-5xl mx-auto">
@@ -236,7 +313,7 @@ export function Wiz4() {
           <div className="bg-card border rounded-xl p-6">
             <h3 className="font-semibold mb-4">API access</h3>
             {!keyGen ? (
-              <button onClick={() => setKeyGen(true)} className="h-10 px-4 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-all hover:-translate-y-0.5">
+              <button onClick={() => updateDraft({ apiKeyGenerated: true })} className="h-10 px-4 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-all hover:-translate-y-0.5">
                 Generate API key
               </button>
             ) : (
@@ -251,7 +328,7 @@ export function Wiz4() {
           <div className="bg-card border rounded-xl p-6">
             <h3 className="font-semibold mb-4">Settlement bank account</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Field label="Account holder name"><input defaultValue="AB InBev Ireland Limited" className={I} /></Field>
+              <Field label="Account holder name"><input defaultValue={draft.legalName} className={I} /></Field>
               <Field label="Bank">
                 <select className={I}><option>Bank of Ireland</option><option>AIB</option><option>Ulster Bank</option><option>Other</option></select>
               </Field>
@@ -265,11 +342,11 @@ export function Wiz4() {
             <h3 className="font-semibold mb-4">Data import (optional)</h3>
             <div className="space-y-3">
               <button
-                onClick={() => setCsvDone(true)}
+                onClick={() => updateDraft({ venuesImported: 247 })}
                 className={`w-full text-left p-3 rounded-md border-2 border-dashed transition-all ${csvDone ? "border-primary bg-accent/30" : "hover:border-primary/50"}`}
               >
                 {csvDone ? (
-                  <div className="text-sm font-medium text-primary inline-flex items-center gap-1.5"><Check className="h-4 w-4" /> 247 venues imported</div>
+                  <div className="text-sm font-medium text-primary inline-flex items-center gap-1.5"><Check className="h-4 w-4" /> {draft.venuesImported} venues imported</div>
                 ) : (
                   <div className="text-sm">📤 Upload venue list (CSV)</div>
                 )}
@@ -287,19 +364,24 @@ export function Wiz4() {
 
 /* ------------------- STEP 5 ------------------- */
 export function Wiz5() {
+  const { draft, updateDraft } = useDemo();
   return (
     <AppShell>
       <div className="max-w-5xl mx-auto">
         <Crumbs step={5} />
         <h1 className="text-2xl font-bold tracking-tight">Onboard new tenant</h1>
-        <p className="text-sm text-muted-foreground mt-1 mb-8">Step 5 of 6: Tenant admin user. Invite the first user from ABInBev who will manage their tenant in Kick.</p>
+        <p className="text-sm text-muted-foreground mt-1 mb-8">Step 5 of 6: Tenant admin user. Invite the first user from {draft.tradingName} who will manage their tenant in Kick.</p>
         <WizardProgress step={5} />
         <div className="bg-card border rounded-xl p-6 max-w-3xl">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <Field label="Name"><input defaultValue="Mark Dunne" className={I} /></Field>
-            <Field label="Email"><input defaultValue="mark.dunne@ab-inbev.com" className={I} /></Field>
+            <Field label="Name">
+              <input value={draft.adminName} onChange={(e) => updateDraft({ adminName: e.target.value })} className={I} />
+            </Field>
+            <Field label="Email">
+              <input value={draft.adminEmail} onChange={(e) => updateDraft({ adminEmail: e.target.value })} className={I} />
+            </Field>
             <Field label="Role">
-              <select className={I}>
+              <select value={draft.adminRole} onChange={(e) => updateDraft({ adminRole: e.target.value })} className={I}>
                 <option>Tenant Admin</option><option>Brand Admin</option><option>Brand Ops</option><option>Field Manager</option>
               </select>
             </Field>
@@ -317,7 +399,7 @@ export function Wiz5() {
             <Field label="Welcome message">
               <textarea
                 rows={4}
-                defaultValue="Welcome to Kick. We're excited to have ABInBev on the platform. Click the link in this email to set your password and explore your tenant dashboard."
+                defaultValue={`Welcome to Kick. We're excited to have ${draft.tradingName} on the platform. Click the link in this email to set your password and explore your tenant dashboard.`}
                 className="w-full p-3 rounded-md border bg-background text-sm focus:ring-2 focus:ring-ring outline-none transition-all"
               />
             </Field>
@@ -333,24 +415,27 @@ export function Wiz5() {
 }
 
 /* ------------------- STEP 6 ------------------- */
-const checklist = [
-  "Tenant record created", "Brand record created with branding", "8 modules enabled",
-  "API key activated", "Mark Dunne invited (email queued)",
-  "First voucher template provisioned", "Welcome dashboard ready",
-];
-
-function SummaryCard({ title, body }: { title: string; body: string }) {
+function SummaryCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="border rounded-lg p-4 bg-muted/30">
       <div className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-1">{title}</div>
-      <div className="text-sm">{body}</div>
+      <div className="text-sm">{children}</div>
     </div>
   );
 }
 
 export function Wiz6() {
-  const { go } = useDemo();
+  const { go, draft } = useDemo();
   const [activating, setActivating] = React.useState(false);
+  const checklist = [
+    `Tenant record created (${draft.tradingName})`,
+    `Brand record created (${draft.brandName})`,
+    `${draft.modulesEnabled} modules enabled`,
+    draft.apiKeyGenerated ? "API key activated" : "API key pending",
+    `${draft.adminName} invited (email queued)`,
+    "First voucher template provisioned",
+    "Welcome dashboard ready",
+  ];
   function activate() {
     setActivating(true);
     setTimeout(() => go("activated"), 1400);
@@ -363,11 +448,36 @@ export function Wiz6() {
         <p className="text-sm text-muted-foreground mt-1 mb-8">Step 6 of 6: Review & activate. Everything looks good? Activate ABInBev to make Kick live for them.</p>
         <WizardProgress step={6} />
         <div className="bg-card border rounded-xl p-6 space-y-3">
-          <SummaryCard title="Tenant" body="AB InBev — slug: abinbev — primary contact: Mark Dunne — colour: navy" />
-          <SummaryCard title="Brand" body="Budweiser — colour: navy — tagline: King of Beers — logo: ✓ uploaded" />
-          <SummaryCard title="Modules" body="8 enabled (QR Redemption, Campaigns, POSM, POS Jobs, Field Evidence, Consumer Preview, Staff PWA, Alerts)" />
-          <SummaryCard title="Integrations" body="API key generated, Slack webhook configured, settlement bank set" />
-          <SummaryCard title="Admin user" body="Mark Dunne (Tenant Admin) — invitation will be sent" />
+          <SummaryCard title="Tenant">
+            <div className="flex items-center gap-3">
+              <span className="h-5 w-5 rounded border" style={{ background: draft.tenantColor }} />
+              <span>
+                <span className="font-medium">{draft.tradingName}</span> — slug: <span className="font-mono text-xs">{draft.slug}</span> — primary contact: {draft.contactName} ({draft.contactEmail})
+              </span>
+            </div>
+          </SummaryCard>
+          <SummaryCard title="Brand">
+            <div className="flex items-center gap-3">
+              {draft.brandLogo ? (
+                <img src={draft.brandLogo} alt="logo" className="h-8 w-8 rounded border bg-white object-contain" />
+              ) : (
+                <span className="h-5 w-5 rounded border" style={{ background: draft.brandColor }} />
+              )}
+              <span>
+                <span className="font-medium">{draft.brandName}</span> — tagline: "{draft.brandTagline}" — logo: {draft.brandLogo ? "✓ uploaded" : "— none"}
+              </span>
+            </div>
+          </SummaryCard>
+          <SummaryCard title="Modules">
+            {draft.modulesEnabled} enabled (QR Redemption, Campaigns, POSM, POS Jobs, Field Evidence, Consumer Preview, Staff PWA, Alerts)
+          </SummaryCard>
+          <SummaryCard title="Integrations">
+            API key {draft.apiKeyGenerated ? "generated" : "not generated"}, settlement bank set
+            {draft.venuesImported > 0 ? `, ${draft.venuesImported} venues imported` : ""}
+          </SummaryCard>
+          <SummaryCard title="Admin user">
+            {draft.adminName} ({draft.adminRole}) — {draft.adminEmail} — invitation will be sent
+          </SummaryCard>
 
           <div className="mt-5 pt-5 border-t">
             <div className="text-sm font-semibold mb-3">When you activate:</div>
@@ -390,7 +500,7 @@ export function Wiz6() {
             disabled={activating}
             className="inline-flex items-center gap-1.5 h-12 px-7 rounded-md bg-primary text-primary-foreground text-base font-semibold hover:opacity-90 transition-all hover:-translate-y-0.5 disabled:opacity-70"
           >
-            {activating ? (<><Loader2 className="h-4 w-4 animate-spin" /> Activating tenant…</>) : "Activate ABInBev →"}
+            {activating ? (<><Loader2 className="h-4 w-4 animate-spin" /> Activating tenant…</>) : `Activate ${draft.tradingName} →`}
           </button>
         </div>
       </div>
@@ -400,7 +510,7 @@ export function Wiz6() {
 
 /* ------------------- ACTIVATION SUCCESS ------------------- */
 export function Activated() {
-  const { go } = useDemo();
+  const { go, draft } = useDemo();
   const [switching, setSwitching] = React.useState(false);
   function continueAsMark() {
     setSwitching(true);
@@ -412,14 +522,14 @@ export function Activated() {
         <div className="mx-auto h-16 w-16 rounded-full bg-primary text-primary-foreground flex items-center justify-center mb-5 animate-in zoom-in duration-700">
           <Check className="h-8 w-8" />
         </div>
-        <h1 className="text-2xl font-bold tracking-tight">ABInBev is live on Kick.</h1>
-        <p className="text-sm text-muted-foreground mt-2">Mark Dunne has been invited. Now let's set up Budweiser's first campaign.</p>
+        <h1 className="text-2xl font-bold tracking-tight">{draft.tradingName} is live on Kick.</h1>
+        <p className="text-sm text-muted-foreground mt-2">{draft.adminName} has been invited. Now let's set up {draft.brandName}'s first campaign.</p>
         <button
           onClick={continueAsMark}
           disabled={switching}
           className="mt-7 w-full h-11 rounded-md bg-primary text-primary-foreground font-semibold text-sm hover:opacity-90 transition-all hover:-translate-y-0.5 inline-flex items-center justify-center gap-2 disabled:opacity-70"
         >
-          {switching ? (<><Loader2 className="h-4 w-4 animate-spin" /> Switching context…</>) : "Continue as Mark Dunne →"}
+          {switching ? (<><Loader2 className="h-4 w-4 animate-spin" /> Switching context…</>) : `Continue as ${draft.adminName} →`}
         </button>
         <p className="text-[11px] text-muted-foreground mt-4">You'll impersonate the tenant admin to walk through their first campaign.</p>
       </div>
