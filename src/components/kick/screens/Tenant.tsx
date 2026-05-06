@@ -1057,7 +1057,7 @@ export function FieldEvidence() {
 
 /* ------------------- FINAL DASHBOARD ------------------- */
 export function FinalDashboard() {
-  const { reset, draft } = useDemo();
+  const { reset, draft, go } = useDemo();
   return (
     <AppShell context="tenant">
       <div className="max-w-7xl mx-auto">
@@ -1076,15 +1076,15 @@ export function FinalDashboard() {
           <div className="bg-card border rounded-xl p-6">
             <h3 className="font-semibold mb-4">Quick actions</h3>
             <div className="space-y-2">
-              <button className="w-full text-left p-4 rounded-lg border hover:bg-muted/40 transition-all hover:-translate-y-0.5">
+              <button onClick={() => go("camp-live")} className="w-full text-left p-4 rounded-lg border hover:bg-muted/40 transition-all hover:-translate-y-0.5">
                 <div className="font-medium text-sm">View campaign performance →</div>
                 <div className="text-xs text-muted-foreground mt-0.5">Champions League · 5 venues</div>
               </button>
-              <button className="w-full text-left p-4 rounded-lg border hover:bg-muted/40 transition-all hover:-translate-y-0.5">
+              <button onClick={() => go("posm-list")} className="w-full text-left p-4 rounded-lg border hover:bg-muted/40 transition-all hover:-translate-y-0.5">
                 <div className="font-medium text-sm">Order more POSM →</div>
                 <div className="text-xs text-muted-foreground mt-0.5">{fmtEUR(342.5)} budget remaining</div>
               </button>
-              <button className="w-full text-left p-4 rounded-lg border hover:bg-muted/40 transition-all hover:-translate-y-0.5">
+              <button onClick={() => go("invite-team")} className="w-full text-left p-4 rounded-lg border hover:bg-muted/40 transition-all hover:-translate-y-0.5">
                 <div className="font-medium text-sm">Invite a team member →</div>
                 <div className="text-xs text-muted-foreground mt-0.5">Brand admins, ops, field</div>
               </button>
