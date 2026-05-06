@@ -1149,3 +1149,156 @@ export function FinalDashboard() {
     </AppShell>
   );
 }
+
+/* ------------------- BRANDS LIST + ADD BRAND ------------------- */
+export function BrandsList() {
+  const { brands, addBrand, draft } = useDemo();
+  const [open, setOpen] = React.useState(false);
+  return (
+    <AppShell context="tenant">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Brands</h1>
+            <p className="text-sm text-muted-foreground mt-1">All brands under {draft.tradingName}.</p>
+          </div>
+          <button onClick={() => setOpen(true)} className="inline-flex items-center gap-1.5 h-10 px-4 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-all hover:-translate-y-0.5">
+            <Plus className="h-4 w-4" /> Add brand
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {brands.map((b) => (
+            <div key={b.id} className="bg-card border rounded-xl p-5 hover:shadow-md transition-shadow animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <div className="flex items-start gap-3">
+                <div className="h-12 w-12 rounded-lg flex items-center justify-center text-white font-bold overflow-hidden flex-shrink-0" style={{ background: b.color }}>
+                  {b.logo ? <img src={b.logo} alt={b.name} className="h-full w-full object-contain bg-white" /> : b.name.slice(0, 1)}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="font-semibold truncate">{b.name}</div>
+                  <div className="text-xs text-muted-foreground truncate">{b.tagline || `Slug: ${b.slug}`}</div>
+                </div>
+              </div>
+              <div className="mt-4 flex items-center gap-2">
+                <span className="inline-block h-4 w-4 rounded border" style={{ background: b.color }} />
+                <span className="inline-block h-4 w-4 rounded border" style={{ background: b.bg }} />
+                <span className="text-[11px] text-muted-foreground ml-auto">{b.slug}</span>
+              </div>
+            </div>
+          ))}
+
+          <button onClick={() => setOpen(true)} className="border-2 border-dashed rounded-xl p-5 flex flex-col items-center justify-center text-muted-foreground hover:border-primary hover:text-primary transition-colors min-h-[140px]">
+            <Plus className="h-6 w-6 mb-2" />
+            <div className="text-sm font-medium">Add another brand</div>
+          </button>
+        </div>
+      </div>
+      <AddBrandDialog open={open} onClose={() => setOpen(false)} onSave={(b) => { addBrand(b); setOpen(false); }} />
+    </AppShell>
+  );
+}
+
+function AddBrandDialog({ open, onClose, onSave }: { open: boolean; onClose: () => void; onSave: (b: Omit<Brand, "id">) => void }) {
+  const [name, setName] = React.useState("");
+  const [tagline, setTagline] = React.useState("");
+  const [color, setColor] = React.useState("#1e3a8a");
+  const [bg, setBg] = React.useState("#E6F0FF");
+  const [logo, setLogo] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (!open) { setName(""); setTagline(""); setColor("#1e3a8a"); setBg("#E6F0FF"); setLogo(null); }
+  }, [open]);
+
+  if (!open) return null;
+  const slug = name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+
+  function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = () => setLogo(reader.result as string);
+    reader.readAsDataURL(f);
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={onClose}>
+      <div className="bg-card border rounded-xl shadow-2xl w-full max-w-lg p-6 animate-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-semibold inline-flex items-center gap-2"><Palette className="h-4 w-4" /> Add brand</h3>
+          <button onClick={onClose} className="p-1 rounded hover:bg-muted"><X className="h-4 w-4" /></button>
+        </div>
+
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground">Brand name</label>
+              <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Stella Artois" className={I} />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground">Slug (auto)</label>
+              <input value={slug} readOnly className={`${I} bg-muted/50`} />
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs font-medium text-muted-foreground">Tagline</label>
+            <input value={tagline} onChange={(e) => setTagline(e.target.value)} placeholder="Optional" className={I} />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground">Brand colour</label>
+              <div className="mt-1 flex items-center gap-2">
+                <input type="color" value={color} onChange={(e) => setColor(e.target.value)} className="h-10 w-12 rounded border bg-background cursor-pointer" />
+                <input value={color} onChange={(e) => setColor(e.target.value)} className={I} />
+              </div>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground">Background</label>
+              <div className="mt-1 flex items-center gap-2">
+                <input type="color" value={bg} onChange={(e) => setBg(e.target.value)} className="h-10 w-12 rounded border bg-background cursor-pointer" />
+                <input value={bg} onChange={(e) => setBg(e.target.value)} className={I} />
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs font-medium text-muted-foreground">Brand logo</label>
+            <label className="mt-1 flex items-center gap-3 p-3 rounded-md border border-dashed hover:bg-muted/40 cursor-pointer transition-colors">
+              {logo ? (
+                <img src={logo} alt="logo" className="h-10 w-10 object-contain bg-white border rounded" />
+              ) : (
+                <div className="h-10 w-10 rounded border flex items-center justify-center text-muted-foreground"><Upload className="h-4 w-4" /></div>
+              )}
+              <span className="text-sm text-muted-foreground">{logo ? "Replace logo" : "Click to upload (PNG / SVG)"}</span>
+              <input type="file" accept="image/*" onChange={handleFile} className="hidden" />
+            </label>
+          </div>
+
+          <div className="rounded-lg p-4 border" style={{ background: bg }}>
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded flex items-center justify-center text-white font-bold overflow-hidden" style={{ background: color }}>
+                {logo ? <img src={logo} alt="" className="h-full w-full object-contain bg-white" /> : (name || "B").slice(0, 1)}
+              </div>
+              <div>
+                <div className="font-semibold" style={{ color }}>{name || "Brand preview"}</div>
+                <div className="text-xs text-muted-foreground">{tagline || "Live brand preview"}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-2 mt-5">
+          <button onClick={onClose} className="h-10 px-4 rounded-md border text-sm hover:bg-muted">Cancel</button>
+          <button
+            onClick={() => name.trim() && onSave({ name: name.trim(), slug, color, bg, tagline, logo })}
+            disabled={!name.trim()}
+            className="h-10 px-5 rounded-md bg-primary text-primary-foreground text-sm font-medium inline-flex items-center gap-1.5 hover:opacity-90 disabled:opacity-50"
+          >
+            <Check className="h-4 w-4" /> Add brand
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
