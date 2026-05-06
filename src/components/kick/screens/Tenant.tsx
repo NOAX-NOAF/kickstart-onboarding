@@ -494,6 +494,419 @@ function Phone({ stage, color, bg, brandName, brandLogo, tagline }: { stage: "cl
   );
 }
 
+/* ------------------- REP PORTAL ------------------- */
+const repCatalogue = [
+  { brand: "Budweiser", name: "Budweiser Counter Mat", price: 12.5, img: budMat, kit: true },
+  { brand: "Budweiser", name: "Budweiser Pint Glass (Bowtie)", price: 6.0, img: budGlassBowtie },
+  { brand: "Budweiser", name: "Budweiser Cooler Box", price: 89.0, img: budCooler },
+  { brand: "Budweiser", name: "Budweiser Polo Shirt", price: 28.0, img: budPolo },
+  { brand: "Budweiser", name: "Budweiser Cap", price: 18.0, img: budCap },
+  { brand: "Heineken", name: "Heineken Tap Handle", price: 22.0, img: null, kit: true },
+  { brand: "Stella Artois", name: "Stella Artois Bar Runner", price: 9.75, img: null, kit: true },
+  { brand: "Stella Artois", name: "Stella Artois Chalice", price: 8.5, img: null },
+  { brand: "Corona Extra", name: "Corona Neon Sign", price: 45.0, img: null, kit: true },
+  { brand: "Beavertown", name: "Beavertown Pump Clip", price: 7.5, img: null },
+  { brand: "Birra Moretti", name: "Birra Moretti Coaster Pack", price: 4.5, img: null },
+];
+
+const repVenues = [
+  "The Porterhouse Temple Bar",
+  "Kehoe's Pub",
+  "The Long Hall",
+  "O'Donoghue's",
+  "Mulligan's of Poolbeg St",
+];
+
+type RepBasket = Record<string, number>;
+type RepOrder = { id: string; venue: string; items: number; total: number; status: "Verified" | "Awaiting verification" | "Delivered"; date: string };
+
+function ProductTile({ name, brand, price, img, qty, onInc, onDec }: { name: string; brand: string; price: number; img: string | null; qty: number; onInc: () => void; onDec: () => void }) {
+  return (
+    <div className="bg-card border rounded-xl p-3 flex flex-col">
+      <div className="aspect-square rounded-md mb-3 flex items-center justify-center bg-muted/40 border overflow-hidden">
+        {img ? (
+          <img src={img} alt={name} className="h-full w-full object-contain p-2" loading="lazy" />
+        ) : (
+          <Package className="h-10 w-10 text-muted-foreground/40" />
+        )}
+      </div>
+      <div className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">{brand}</div>
+      <div className="font-semibold text-sm leading-snug mt-0.5 mb-1.5 line-clamp-2 min-h-[2.5em]">{name}</div>
+      <div className="text-sm font-bold mb-2">{fmtEUR(price)}</div>
+      <div className="mt-auto flex items-center justify-between">
+        <div className="flex items-center gap-1">
+          <button onClick={onDec} className="h-7 w-7 rounded border hover:bg-muted transition-colors flex items-center justify-center"><Minus className="h-3 w-3" /></button>
+          <div className="w-8 text-center text-sm font-medium tabular-nums">{qty}</div>
+          <button onClick={onInc} className="h-7 w-7 rounded border hover:bg-muted transition-colors flex items-center justify-center"><Plus className="h-3 w-3" /></button>
+        </div>
+        <button onClick={onInc} className="text-xs h-7 px-2 rounded-md bg-primary text-primary-foreground font-medium hover:opacity-90">Add</button>
+      </div>
+    </div>
+  );
+}
+
+export function RepPortal() {
+  const { go, brands } = useDemo();
+  const [tab, setTab] = React.useState<"catalogue" | "basket" | "orders" | "verify">("catalogue");
+  const [brandFilter, setBrandFilter] = React.useState<string>("All brands");
+  const [posType, setPosType] = React.useState("All POS types");
+  const [search, setSearch] = React.useState("");
+  const [venue, setVenue] = React.useState(repVenues[0]);
+  const [basket, setBasket] = React.useState<RepBasket>({});
+  const [orders, setOrders] = React.useState<RepOrder[]>([
+    { id: "REP-2891", venue: "Kehoe's Pub", items: 4, total: 142.0, status: "Verified", date: "2 days ago" },
+    { id: "REP-2887", venue: "The Long Hall", items: 2, total: 64.5, status: "Awaiting verification", date: "5 days ago" },
+    { id: "REP-2851", venue: "O'Donoghue's", items: 6, total: 287.0, status: "Delivered", date: "1 week ago" },
+  ]);
+  const [tip, setTip] = React.useState(true);
+  const [verifyOrder, setVerifyOrder] = React.useState<RepOrder | null>(null);
+
+  const allBrandNames = ["All brands", ...Array.from(new Set([...brands.map((b) => b.name), ...repCatalogue.map((p) => p.brand)]))];
+  const filtered = repCatalogue.filter((p) =>
+    (brandFilter === "All brands" || p.brand === brandFilter) &&
+    (search === "" || p.name.toLowerCase().includes(search.toLowerCase()))
+  );
+  const starterKits = filtered.filter((p) => p.kit);
+  const products = filtered;
+
+  const inc = (key: string) => setBasket((b) => ({ ...b, [key]: (b[key] || 0) + 1 }));
+  const dec = (key: string) => setBasket((b) => ({ ...b, [key]: Math.max(0, (b[key] || 0) - 1) }));
+  const basketEntries = Object.entries(basket).filter(([, q]) => q > 0).map(([name, q]) => {
+    const p = repCatalogue.find((x) => x.name === name)!;
+    return { ...p, qty: q };
+  });
+  const basketTotal = basketEntries.reduce((s, e) => s + e.price * e.qty, 0);
+  const basketCount = basketEntries.reduce((s, e) => s + e.qty, 0);
+
+  function placeOrder() {
+    if (basketEntries.length === 0) return;
+    const id = `REP-${Math.floor(Math.random() * 9000) + 1000}`;
+    const ord: RepOrder = { id, venue, items: basketCount, total: basketTotal, status: "Awaiting verification", date: "Just now" };
+    setOrders((o) => [ord, ...o]);
+    setBasket({});
+    setTab("verify");
+    setVerifyOrder(ord);
+  }
+
+  function reorderPrevious() {
+    setBasket({
+      "Budweiser Counter Mat": 2,
+      "Stella Artois Chalice": 6,
+      "Heineken Tap Handle": 1,
+    });
+    setTab("basket");
+  }
+
+  return (
+    <div className="min-h-screen bg-background flex flex-col" style={{ color: "var(--foreground)" }}>
+      {/* Header */}
+      <header className="h-14 px-5 flex items-center justify-between text-white" style={{ background: "var(--kick-sidebar)" }}>
+        <div className="flex items-center gap-2">
+          <span className="font-bold text-lg">Kick</span>
+          <span className="text-xs opacity-70">· Rep Portal</span>
+        </div>
+        <button onClick={() => go("tenant-dashboard")} className="text-sm inline-flex items-center gap-1.5 hover:opacity-80">
+          <ArrowLeft className="h-4 w-4" /> Admin
+        </button>
+      </header>
+
+      {/* Venue context bar */}
+      <div className="border-b bg-muted/30 px-5 py-2.5 flex items-center justify-between gap-3 flex-wrap text-sm">
+        <div className="inline-flex items-center gap-2">
+          <MapPinned className="h-4 w-4 text-primary" />
+          <span className="text-muted-foreground">Visiting:</span>
+          <select value={venue} onChange={(e) => setVenue(e.target.value)} className="h-8 px-2 rounded-md border bg-background text-sm font-medium focus:ring-2 focus:ring-ring outline-none">
+            {repVenues.map((v) => <option key={v}>{v}</option>)}
+          </select>
+        </div>
+        <div className="text-xs text-muted-foreground">Aoife Byrne · Field rep · Dublin North</div>
+      </div>
+
+      <main className="flex-1 px-4 sm:px-6 py-5 max-w-6xl mx-auto w-full pb-24">
+        {tab === "catalogue" && (
+          <>
+            {/* Search */}
+            <div className="relative mb-4">
+              <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search catalogue…"
+                className="w-full h-12 pl-10 pr-3 rounded-md border bg-card text-sm focus:ring-2 focus:ring-ring outline-none"
+              />
+            </div>
+
+            {/* Brand pills */}
+            <div className="flex gap-2 overflow-x-auto pb-2 mb-3">
+              {allBrandNames.map((b) => (
+                <button
+                  key={b}
+                  onClick={() => setBrandFilter(b)}
+                  className={`shrink-0 h-9 px-4 rounded-full text-sm font-medium border transition-colors ${brandFilter === b ? "bg-primary text-primary-foreground border-primary" : "bg-card hover:bg-muted"}`}
+                >
+                  {b}
+                </button>
+              ))}
+            </div>
+
+            {/* Filters */}
+            <div className="grid grid-cols-2 gap-2 mb-4">
+              <select value={posType} onChange={(e) => setPosType(e.target.value)} className="h-10 px-3 rounded-md border bg-card text-sm">
+                <option>All POS types</option>
+                <option>Glassware</option>
+                <option>Counter mats</option>
+                <option>Apparel</option>
+                <option>Signage</option>
+              </select>
+              <select className="h-10 px-3 rounded-md border bg-card text-sm">
+                <option>All categories</option>
+                <option>Starter kits</option>
+                <option>Promotional</option>
+                <option>Permanent fit</option>
+              </select>
+            </div>
+
+            <button onClick={reorderPrevious} className="mb-5 inline-flex items-center gap-2 h-10 px-4 rounded-md border-2 border-primary text-primary font-semibold text-sm hover:bg-accent transition-colors">
+              <RefreshCw className="h-4 w-4" /> Reorder previous
+            </button>
+
+            {/* Starter kits */}
+            {starterKits.length > 0 && (
+              <>
+                <h2 className="font-bold text-lg mb-3">Starter kits</h2>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
+                  {starterKits.map((p) => (
+                    <ProductTile key={p.name} {...p} qty={basket[p.name] || 0} onInc={() => inc(p.name)} onDec={() => dec(p.name)} />
+                  ))}
+                </div>
+              </>
+            )}
+
+            {tip && (
+              <div className="mb-5 rounded-lg border border-primary/30 bg-accent/40 px-4 py-3 flex items-center justify-between gap-3">
+                <div className="text-sm"><span className="mr-1">👉</span><strong>Tip:</strong> tap <em>Add</em> on a product to drop it straight into the basket.</div>
+                <button onClick={() => setTip(false)} className="p-1 rounded hover:bg-background/60"><X className="h-4 w-4" /></button>
+              </div>
+            )}
+
+            <div className="flex items-baseline gap-2 mb-3">
+              <h2 className="font-bold text-lg">Products</h2>
+              <span className="text-xs text-muted-foreground">({products.length} items)</span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+              {products.map((p) => (
+                <ProductTile key={p.name} {...p} qty={basket[p.name] || 0} onInc={() => inc(p.name)} onDec={() => dec(p.name)} />
+              ))}
+            </div>
+          </>
+        )}
+
+        {tab === "basket" && (
+          <>
+            <h1 className="text-xl font-bold mb-1">Basket</h1>
+            <p className="text-xs text-muted-foreground mb-4">Delivering to {venue}</p>
+            {basketEntries.length === 0 ? (
+              <div className="bg-card border rounded-xl p-10 text-center">
+                <ShoppingCart className="h-10 w-10 mx-auto text-muted-foreground/40 mb-3" />
+                <p className="text-sm text-muted-foreground">Your basket is empty.</p>
+                <button onClick={() => setTab("catalogue")} className="mt-4 h-10 px-5 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-90">Browse catalogue</button>
+              </div>
+            ) : (
+              <>
+                <div className="bg-card border rounded-xl divide-y">
+                  {basketEntries.map((e) => (
+                    <div key={e.name} className="p-4 flex items-center gap-3">
+                      <div className="h-14 w-14 rounded border bg-muted/40 flex items-center justify-center overflow-hidden shrink-0">
+                        {e.img ? <img src={e.img} alt="" className="h-full w-full object-contain p-1" /> : <Package className="h-6 w-6 text-muted-foreground/50" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">{e.brand}</div>
+                        <div className="font-medium text-sm truncate">{e.name}</div>
+                        <div className="text-xs text-muted-foreground">{fmtEUR(e.price)} / unit</div>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <button onClick={() => dec(e.name)} className="h-8 w-8 rounded border hover:bg-muted flex items-center justify-center"><Minus className="h-3 w-3" /></button>
+                        <div className="w-8 text-center text-sm font-medium tabular-nums">{e.qty}</div>
+                        <button onClick={() => inc(e.name)} className="h-8 w-8 rounded border hover:bg-muted flex items-center justify-center"><Plus className="h-3 w-3" /></button>
+                      </div>
+                      <div className="w-20 text-right font-semibold text-sm tabular-nums">{fmtEUR(e.price * e.qty)}</div>
+                    </div>
+                  ))}
+                </div>
+                <div className="bg-card border rounded-xl p-5 mt-4">
+                  <div className="flex justify-between text-sm mb-1"><span className="text-muted-foreground">Items</span><span className="tabular-nums">{basketCount}</span></div>
+                  <div className="flex justify-between text-base font-semibold border-t pt-2 mt-2"><span>Total</span><span className="tabular-nums">{fmtEUR(basketTotal)}</span></div>
+                  <button onClick={placeOrder} className="mt-4 w-full h-12 rounded-md bg-primary text-primary-foreground font-semibold text-sm hover:opacity-90 inline-flex items-center justify-center gap-2">
+                    <Send className="h-4 w-4" /> Submit order for {venue}
+                  </button>
+                </div>
+              </>
+            )}
+          </>
+        )}
+
+        {tab === "orders" && (
+          <>
+            <h1 className="text-xl font-bold mb-4">My orders</h1>
+            <div className="bg-card border rounded-xl divide-y">
+              {orders.map((o) => (
+                <div key={o.id} className="p-4 flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="font-mono text-xs text-muted-foreground">{o.id}</div>
+                    <div className="font-medium text-sm truncate">{o.venue}</div>
+                    <div className="text-xs text-muted-foreground">{o.items} items · {fmtEUR(o.total)} · {o.date}</div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="text-[11px] px-2 py-1 rounded-full font-medium"
+                      style={
+                        o.status === "Verified"
+                          ? { background: "var(--kick-success-bg)", color: "var(--kick-success)" }
+                          : o.status === "Delivered"
+                          ? { background: "var(--kick-amber-bg)", color: "var(--kick-amber)" }
+                          : { background: "var(--accent)", color: "var(--accent-foreground)" }
+                      }
+                    >
+                      {o.status}
+                    </span>
+                    {o.status === "Awaiting verification" && (
+                      <button onClick={() => { setVerifyOrder(o); setTab("verify"); }} className="text-xs h-8 px-3 rounded-md bg-primary text-primary-foreground font-medium hover:opacity-90 inline-flex items-center gap-1">
+                        <Camera className="h-3.5 w-3.5" /> Verify
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {tab === "verify" && (
+          <RepVerifyView
+            order={verifyOrder ?? orders[0]}
+            onDone={(id) => {
+              setOrders((list) => list.map((o) => (o.id === id ? { ...o, status: "Verified" } : o)));
+              setVerifyOrder(null);
+              setTab("orders");
+            }}
+            onCancel={() => setTab("orders")}
+          />
+        )}
+      </main>
+
+      {/* Bottom tab bar */}
+      <nav className="fixed bottom-0 inset-x-0 bg-card border-t grid grid-cols-4 z-40">
+        {[
+          { id: "catalogue", label: "Catalogue", icon: LayoutGrid },
+          { id: "basket", label: `Basket${basketCount ? ` (${basketCount})` : ""}`, icon: ShoppingCart },
+          { id: "orders", label: "Orders", icon: FileText },
+          { id: "verify", label: "Verify", icon: Camera },
+        ].map((t) => {
+          const Icon = t.icon;
+          const active = tab === t.id;
+          return (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id as typeof tab)}
+              className="py-2.5 flex flex-col items-center gap-0.5 text-xs transition-colors relative"
+              style={{ color: active ? "var(--primary)" : "var(--muted-foreground)" }}
+            >
+              {active && <span className="absolute top-0 inset-x-6 h-0.5 bg-primary rounded-b" />}
+              <Icon className="h-5 w-5" />
+              <span className="font-medium">{t.label}</span>
+            </button>
+          );
+        })}
+      </nav>
+    </div>
+  );
+}
+
+function RepVerifyView({ order, onDone, onCancel }: { order: RepOrder | undefined; onDone: (id: string) => void; onCancel: () => void }) {
+  const [photos, setPhotos] = React.useState<string[]>([]);
+  const [gps, setGps] = React.useState(false);
+  const [submitting, setSubmitting] = React.useState(false);
+  const fileRef = React.useRef<HTMLInputElement>(null);
+
+  function addPhoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files || []);
+    files.forEach((f) => {
+      const reader = new FileReader();
+      reader.onload = () => setPhotos((p) => [...p, reader.result as string]);
+      reader.readAsDataURL(f);
+    });
+  }
+  function simulatePhoto() {
+    setPhotos((p) => [...p, ""]);
+  }
+  function submit() {
+    if (!order) return;
+    setSubmitting(true);
+    setTimeout(() => onDone(order.id), 900);
+  }
+
+  if (!order) {
+    return <div className="text-sm text-muted-foreground">No order to verify.</div>;
+  }
+
+  return (
+    <>
+      <h1 className="text-xl font-bold mb-1">Verify install</h1>
+      <p className="text-xs text-muted-foreground mb-4">Order <span className="font-mono">{order.id}</span> · {order.venue}</p>
+
+      <div className="bg-card border rounded-xl p-5 space-y-4">
+        <button
+          onClick={() => setGps(true)}
+          className={`w-full h-11 rounded-md border-2 text-sm font-medium inline-flex items-center justify-center gap-2 transition-colors ${gps ? "border-primary bg-accent text-primary" : "border-dashed hover:border-primary/50"}`}
+        >
+          {gps ? (<><Check className="h-4 w-4" /> GPS check passed · {order.venue}</>) : (<><MapPin className="h-4 w-4" /> Tap to confirm GPS at venue</>)}
+        </button>
+
+        <div>
+          <div className="text-sm font-medium mb-2">Install photos ({photos.length}/3 minimum)</div>
+          <div className="grid grid-cols-3 gap-2 mb-3">
+            {photos.map((src, i) => (
+              <div key={i} className="aspect-square rounded-md border bg-muted/40 overflow-hidden flex items-center justify-center">
+                {src ? <img src={src} alt="" className="h-full w-full object-cover" /> : <Camera className="h-6 w-6 text-muted-foreground/50" />}
+              </div>
+            ))}
+            {Array.from({ length: Math.max(0, 3 - photos.length) }).map((_, i) => (
+              <div key={`ph-${i}`} className="aspect-square rounded-md border-2 border-dashed bg-muted/20 flex items-center justify-center text-muted-foreground/40">
+                <Camera className="h-6 w-6" />
+              </div>
+            ))}
+          </div>
+          <input ref={fileRef} type="file" accept="image/*" capture="environment" multiple className="hidden" onChange={addPhoto} />
+          <div className="grid grid-cols-2 gap-2">
+            <button onClick={() => fileRef.current?.click()} className="h-10 rounded-md border text-sm font-medium hover:bg-muted inline-flex items-center justify-center gap-1.5">
+              <Upload className="h-4 w-4" /> Upload
+            </button>
+            <button onClick={simulatePhoto} className="h-10 rounded-md border text-sm font-medium hover:bg-muted inline-flex items-center justify-center gap-1.5">
+              <Camera className="h-4 w-4" /> Simulate capture
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label className="text-xs font-medium text-muted-foreground">Notes (optional)</label>
+          <textarea rows={3} placeholder="Anything the brand team should know about this install…" className="mt-1 w-full p-3 rounded-md border bg-background text-sm focus:ring-2 focus:ring-ring outline-none" />
+        </div>
+      </div>
+
+      <div className="flex gap-2 mt-5">
+        <button onClick={onCancel} className="flex-1 h-12 rounded-md border text-sm font-medium hover:bg-muted">Cancel</button>
+        <button
+          onClick={submit}
+          disabled={!gps || photos.length < 3 || submitting}
+          className="flex-1 h-12 rounded-md bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 disabled:opacity-50 inline-flex items-center justify-center gap-2"
+        >
+          {submitting ? (<><Loader2 className="h-4 w-4 animate-spin" /> Submitting…</>) : (<><Check className="h-4 w-4" /> Submit verification</>)}
+        </button>
+      </div>
+    </>
+  );
+}
+
 export function Camp4() {
   const { go, draft } = useDemo();
   const [launching, setLaunching] = React.useState(false);
