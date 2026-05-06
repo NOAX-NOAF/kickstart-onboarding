@@ -222,14 +222,25 @@ function slugify(s: string) {
 
 /* ------------------- CAMPAIGN STEP 1 ------------------- */
 export function Camp1() {
-  const { draft } = useDemo();
-  const [name, setName] = React.useState(`${draft.brandName} Champions League`);
-  const [slug, setSlug] = React.useState(slugify(`${draft.brandName} Champions League`));
+  const { draft, brands, currentUser } = useDemo();
+  const allowedBrands = React.useMemo(() => {
+    const list = brands.length ? brands.map((b) => b.name) : [draft.brandName];
+    if (currentUser.allowedBrands === "all") return list;
+    return list.filter((n) => (currentUser.allowedBrands as string[]).includes(n));
+  }, [brands, draft.brandName, currentUser.allowedBrands]);
+  const [brand, setBrand] = React.useState<string>(allowedBrands[0] ?? draft.brandName);
+  React.useEffect(() => {
+    if (!allowedBrands.includes(brand) && allowedBrands[0]) setBrand(allowedBrands[0]);
+  }, [allowedBrands, brand]);
+  const [name, setName] = React.useState(`${brand} Champions League`);
+  const [slug, setSlug] = React.useState(slugify(`${brand} Champions League`));
   const [slugDirty, setSlugDirty] = React.useState(false);
   function onName(v: string) {
     setName(v);
     if (!slugDirty) setSlug(slugify(v));
   }
+  const locked = allowedBrands.length <= 1;
+  const noAccess = allowedBrands.length === 0;
   return (
     <AppShell context="tenant">
       <div className="max-w-3xl mx-auto">
@@ -242,8 +253,25 @@ export function Camp1() {
           <Field label="Slug" hint={`kick.app/c/${slug}`}>
             <input value={slug} onChange={(e) => { setSlug(e.target.value); setSlugDirty(true); }} className={I + " font-mono"} />
           </Field>
-          <Field label="Brand" hint={`Locked — ${draft.brandName} is the only brand under ${draft.tradingName}`}>
-            <select disabled className={I + " opacity-70"}><option>{draft.brandName}</option></select>
+          <Field
+            label="Brand"
+            hint={
+              noAccess
+                ? `Your role (${currentUser.role}) has no brand permissions assigned`
+                : locked
+                  ? `Locked — ${currentUser.role} has access to ${allowedBrands[0]} only`
+                  : `${currentUser.role} — choose from ${allowedBrands.length} permitted brand${allowedBrands.length === 1 ? "" : "s"}`
+            }
+          >
+            <select
+              value={brand}
+              onChange={(e) => setBrand(e.target.value)}
+              disabled={locked || noAccess}
+              className={I + (locked || noAccess ? " opacity-70" : "")}
+            >
+              {noAccess && <option value="">— No brands available —</option>}
+              {allowedBrands.map((b) => <option key={b} value={b}>{b}</option>)}
+            </select>
           </Field>
           <Field label="Reward type">
             <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
@@ -255,7 +283,7 @@ export function Camp1() {
               ))}
             </div>
           </Field>
-          <Field label="Reward description"><input defaultValue={`Free ${draft.brandName} on matchday at participating venues`} className={I} /></Field>
+          <Field label="Reward description"><input defaultValue={`Free ${brand} on matchday at participating venues`} className={I} /></Field>
         </div>
         <CampNav back={null} next="camp-2" />
       </div>
@@ -1316,10 +1344,17 @@ export function PosmStatus() {
 
 /* ------------------- CAMPAIGNS LIST ------------------- */
 export function CampaignsList() {
-  const { go, draft } = useDemo();
+  const { go, draft, brands, currentUser, setCurrentUser } = useDemo();
+  const brandNames = brands.length ? brands.map((b) => b.name) : [draft.brandName];
   const items = [
     { id: "C-2025-001", name: `${draft.brandName} Champions League`, status: "Live", venues: 5, redemptions: 0, screen: "camp-live" as const },
   ];
+  const personas: { label: string; role: "Tenant Admin" | "Brand Admin" | "Brand Ops"; allowedBrands: "all" | string[] }[] = [
+    { label: `Tenant Admin (all brands)`, role: "Tenant Admin", allowedBrands: "all" },
+    ...(brandNames[0] ? [{ label: `Brand Admin · ${brandNames[0]}`, role: "Brand Admin" as const, allowedBrands: [brandNames[0]] }] : []),
+    ...(brandNames[1] ? [{ label: `Brand Ops · ${brandNames[1]}`, role: "Brand Ops" as const, allowedBrands: [brandNames[1]] }] : []),
+  ];
+  const currentKey = currentUser.allowedBrands === "all" ? "all" : (currentUser.allowedBrands as string[]).join(",");
   return (
     <AppShell context="tenant">
       <div className="max-w-7xl mx-auto">
@@ -1328,9 +1363,25 @@ export function CampaignsList() {
             <h1 className="text-2xl font-bold tracking-tight">Campaigns</h1>
             <p className="text-sm text-muted-foreground mt-1">All {draft.brandName} campaigns across selected venues.</p>
           </div>
-          <button onClick={() => go("camp-1")} className="inline-flex items-center gap-1.5 h-10 px-4 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-all hover:-translate-y-0.5">
-            <Plus className="h-4 w-4" /> New campaign
-          </button>
+          <div className="flex items-center gap-2">
+            <select
+              value={currentKey}
+              onChange={(e) => {
+                const p = personas.find((x) => (x.allowedBrands === "all" ? "all" : x.allowedBrands.join(",")) === e.target.value);
+                if (p) setCurrentUser({ name: currentUser.name, role: p.role, allowedBrands: p.allowedBrands });
+              }}
+              className="h-10 px-3 rounded-md border bg-background text-xs"
+              title="Demo: switch acting user"
+            >
+              {personas.map((p) => {
+                const k = p.allowedBrands === "all" ? "all" : p.allowedBrands.join(",");
+                return <option key={k} value={k}>Acting as: {p.label}</option>;
+              })}
+            </select>
+            <button onClick={() => go("camp-1")} className="inline-flex items-center gap-1.5 h-10 px-4 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-all hover:-translate-y-0.5">
+              <Plus className="h-4 w-4" /> New campaign
+            </button>
+          </div>
         </div>
         <div className="bg-card border rounded-xl overflow-hidden">
           <table className="w-full text-sm">
