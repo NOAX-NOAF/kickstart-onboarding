@@ -700,6 +700,7 @@ export function PosmBuilder() {
 const posmSteps = ["Submitted", "Budget Check", "Approved", "Reserved", "Picked", "Shipped", "Delivered", "Verified", "Closed"];
 
 function RepMessageDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { go } = useDemo();
   const [sent, setSent] = React.useState(false);
   const [channel, setChannel] = React.useState<"sms" | "email">("sms");
   const [rep, setRep] = React.useState("Aoife Byrne (Field rep · Dublin North)");
@@ -757,7 +758,31 @@ function RepMessageDialog({ open, onClose }: { open: boolean; onClose: () => voi
             <div className="mx-auto h-12 w-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center mb-3"><Check className="h-6 w-6" /></div>
             <h3 className="font-semibold">Message sent</h3>
             <p className="text-sm text-muted-foreground mt-1">{rep.split(" (")[0]} will receive the verification link via {channel.toUpperCase()}.</p>
-            <button onClick={onClose} className="mt-5 h-10 px-5 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-90">Done</button>
+            <div className="mt-5 grid grid-cols-1 gap-2 text-left">
+              <div className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold px-1">Jump to</div>
+              <button
+                onClick={() => { onClose(); go("field-evidence"); }}
+                className="flex items-center justify-between p-3 rounded-md border hover:bg-muted transition-colors"
+              >
+                <span className="inline-flex items-center gap-2 text-sm"><Camera className="h-4 w-4" /> Field Evidence</span>
+                <ArrowRight className="h-4 w-4 text-muted-foreground" />
+              </button>
+              <button
+                onClick={() => { onClose(); go("camp-live"); }}
+                className="flex items-center justify-between p-3 rounded-md border hover:bg-muted transition-colors"
+              >
+                <span className="inline-flex items-center gap-2 text-sm"><Megaphone className="h-4 w-4" /> Campaign · Champions League</span>
+                <ArrowRight className="h-4 w-4 text-muted-foreground" />
+              </button>
+              <button
+                onClick={() => { onClose(); go("posm-status"); }}
+                className="flex items-center justify-between p-3 rounded-md border hover:bg-muted transition-colors"
+              >
+                <span className="inline-flex items-center gap-2 text-sm"><Package className="h-4 w-4" /> POSM order POSM-A7F3K2025</span>
+                <ArrowRight className="h-4 w-4 text-muted-foreground" />
+              </button>
+            </div>
+            <button onClick={onClose} className="mt-4 h-10 px-5 rounded-md border text-sm font-medium hover:bg-muted">Close</button>
           </div>
         )}
       </div>
