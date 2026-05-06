@@ -289,9 +289,10 @@ export function Wiz3() {
 
 /* ------------------- STEP 4 ------------------- */
 export function Wiz4() {
-  const [keyGen, setKeyGen] = React.useState(false);
-  const [csvDone, setCsvDone] = React.useState(false);
-  const apiKey = "kick_pk_abinbev_3f7a9c2e1b4d8";
+  const { draft, updateDraft } = useDemo();
+  const keyGen = draft.apiKeyGenerated;
+  const csvDone = draft.venuesImported > 0;
+  const apiKey = `kick_pk_${draft.slug}_3f7a9c2e1b4d8`;
   return (
     <AppShell>
       <div className="max-w-5xl mx-auto">
@@ -312,7 +313,7 @@ export function Wiz4() {
           <div className="bg-card border rounded-xl p-6">
             <h3 className="font-semibold mb-4">API access</h3>
             {!keyGen ? (
-              <button onClick={() => setKeyGen(true)} className="h-10 px-4 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-all hover:-translate-y-0.5">
+              <button onClick={() => updateDraft({ apiKeyGenerated: true })} className="h-10 px-4 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-all hover:-translate-y-0.5">
                 Generate API key
               </button>
             ) : (
@@ -327,7 +328,7 @@ export function Wiz4() {
           <div className="bg-card border rounded-xl p-6">
             <h3 className="font-semibold mb-4">Settlement bank account</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Field label="Account holder name"><input defaultValue="AB InBev Ireland Limited" className={I} /></Field>
+              <Field label="Account holder name"><input defaultValue={draft.legalName} className={I} /></Field>
               <Field label="Bank">
                 <select className={I}><option>Bank of Ireland</option><option>AIB</option><option>Ulster Bank</option><option>Other</option></select>
               </Field>
@@ -341,11 +342,11 @@ export function Wiz4() {
             <h3 className="font-semibold mb-4">Data import (optional)</h3>
             <div className="space-y-3">
               <button
-                onClick={() => setCsvDone(true)}
+                onClick={() => updateDraft({ venuesImported: 247 })}
                 className={`w-full text-left p-3 rounded-md border-2 border-dashed transition-all ${csvDone ? "border-primary bg-accent/30" : "hover:border-primary/50"}`}
               >
                 {csvDone ? (
-                  <div className="text-sm font-medium text-primary inline-flex items-center gap-1.5"><Check className="h-4 w-4" /> 247 venues imported</div>
+                  <div className="text-sm font-medium text-primary inline-flex items-center gap-1.5"><Check className="h-4 w-4" /> {draft.venuesImported} venues imported</div>
                 ) : (
                   <div className="text-sm">📤 Upload venue list (CSV)</div>
                 )}
