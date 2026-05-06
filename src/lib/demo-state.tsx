@@ -62,12 +62,22 @@ const defaultDraft: TenantDraft = {
   adminRole: "Tenant Admin",
 };
 
+export type OnboardedTenant = {
+  name: string;
+  brands: string;
+  modules: number;
+  color: string;
+  logo: string | null;
+};
+
 type Ctx = {
   screen: Screen;
   go: (s: Screen) => void;
   reset: () => void;
   draft: TenantDraft;
   updateDraft: (patch: Partial<TenantDraft>) => void;
+  onboardedTenants: OnboardedTenant[];
+  activateTenant: () => void;
 };
 
 const DemoCtx = React.createContext<Ctx | null>(null);
@@ -75,6 +85,7 @@ const DemoCtx = React.createContext<Ctx | null>(null);
 export function DemoProvider({ children }: { children: React.ReactNode }) {
   const [screen, setScreen] = React.useState<Screen>("login");
   const [draft, setDraft] = React.useState<TenantDraft>(defaultDraft);
+  const [onboardedTenants, setOnboardedTenants] = React.useState<OnboardedTenant[]>([]);
   const updateDraft = React.useCallback(
     (patch: Partial<TenantDraft>) => setDraft((d) => ({ ...d, ...patch })),
     [],
@@ -83,12 +94,31 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
     setScreen(s);
     if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
+  const activateTenant = React.useCallback(() => {
+    setOnboardedTenants((list) => {
+      // avoid duplicate by slug
+      if (list.some((t) => t.name === draft.tradingName)) return list;
+      return [
+        {
+          name: draft.tradingName,
+          brands: `1 (${draft.brandName})`,
+          modules: draft.modulesEnabled,
+          color: draft.tenantColor,
+          logo: draft.brandLogo,
+        },
+        ...list,
+      ];
+    });
+  }, [draft]);
   const reset = React.useCallback(() => {
     setScreen("login");
     setDraft(defaultDraft);
+    setOnboardedTenants([]);
   }, []);
   return (
-    <DemoCtx.Provider value={{ screen, go, reset, draft, updateDraft }}>
+    <DemoCtx.Provider
+      value={{ screen, go, reset, draft, updateDraft, onboardedTenants, activateTenant }}
+    >
       {children}
     </DemoCtx.Provider>
   );

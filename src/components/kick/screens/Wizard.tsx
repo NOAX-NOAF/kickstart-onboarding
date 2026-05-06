@@ -425,7 +425,7 @@ function SummaryCard({ title, children }: { title: string; children: React.React
 }
 
 export function Wiz6() {
-  const { go, draft } = useDemo();
+  const { go, draft, activateTenant } = useDemo();
   const [activating, setActivating] = React.useState(false);
   const checklist = [
     `Tenant record created (${draft.tradingName})`,
@@ -438,6 +438,7 @@ export function Wiz6() {
   ];
   function activate() {
     setActivating(true);
+    activateTenant();
     setTimeout(() => go("activated"), 1400);
   }
   return (

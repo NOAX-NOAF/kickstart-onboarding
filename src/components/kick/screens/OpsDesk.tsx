@@ -41,7 +41,7 @@ function Kpi({ label, value, suffix, spark }: { label: string; value: number; su
   );
 }
 
-const tenants = [
+const seedTenants = [
   { name: "Valeo Foods", brands: "4 (Batchelors, Odlums, Chef, Bollingers)", modules: 6 },
   { name: "Three Ireland", brands: "1 (Three)", modules: 7 },
   { name: "Hunky Dorys", brands: "1 (Hunky Dorys)", modules: 6 },
@@ -99,7 +99,18 @@ function ActivityFeed() {
 }
 
 export function OpsDesk() {
-  const { go } = useDemo();
+  const { go, onboardedTenants } = useDemo();
+  const tenants = [
+    ...onboardedTenants.map((t) => ({
+      name: t.name,
+      brands: t.brands,
+      modules: t.modules,
+      color: t.color,
+      logo: t.logo,
+      isNew: true as const,
+    })),
+    ...seedTenants.map((t) => ({ ...t, color: undefined, logo: null, isNew: false as const })),
+  ];
   return (
     <AppShell>
       <div className="max-w-7xl mx-auto">
@@ -109,8 +120,8 @@ export function OpsDesk() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
-          <Kpi label="Tenants Live" value={3} />
-          <Kpi label="Brands Live" value={6} />
+          <Kpi label="Tenants Live" value={3 + onboardedTenants.length} />
+          <Kpi label="Brands Live" value={6 + onboardedTenants.length} />
           <Kpi label="Vouchers (24h)" value={1847} />
           <Kpi label="Redemptions (24h)" value={1203} />
           <Kpi label="API Calls (24h)" value={312911} spark />
@@ -133,8 +144,24 @@ export function OpsDesk() {
                 </thead>
                 <tbody className="divide-y">
                   {tenants.map((t) => (
-                    <tr key={t.name} className="hover:bg-muted/40 transition-colors">
-                      <td className="py-3 font-medium">{t.name}</td>
+                    <tr key={t.name} className={`hover:bg-muted/40 transition-colors ${t.isNew ? "animate-in fade-in slide-in-from-top-1 duration-500" : ""}`}>
+                      <td className="py-3 font-medium">
+                        <div className="flex items-center gap-2.5">
+                          {t.logo ? (
+                            <img src={t.logo} alt="" className="h-7 w-7 rounded border bg-white object-contain" />
+                          ) : t.color ? (
+                            <span className="h-7 w-7 rounded border flex-shrink-0" style={{ background: t.color }} />
+                          ) : (
+                            <span className="h-7 w-7 rounded border bg-muted flex items-center justify-center text-[10px] font-semibold text-muted-foreground">
+                              {t.name.slice(0, 2).toUpperCase()}
+                            </span>
+                          )}
+                          <span>{t.name}</span>
+                          {t.isNew && (
+                            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">NEW</span>
+                          )}
+                        </div>
+                      </td>
                       <td className="py-3 text-muted-foreground">{t.brands}</td>
                       <td className="py-3">{t.modules}</td>
                       <td className="py-3">
