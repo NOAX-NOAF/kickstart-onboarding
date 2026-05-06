@@ -1,10 +1,10 @@
 import * as React from "react";
-import { useDemo } from "@/lib/demo-state";
+import { useDemo, type Brand } from "@/lib/demo-state";
 import { AppShell } from "../AppShell";
 import {
   Megaphone, Package, Users, ArrowRight, Check, Plus, Minus, Loader2,
   ChevronRight, ArrowLeft, Search, MapPin, X, ShieldCheck, QrCode,
-  MessageSquare, Camera, Send, Mail, Smartphone, Eye,
+  MessageSquare, Camera, Send, Mail, Smartphone, Eye, Palette, Upload,
 } from "lucide-react";
 
 import budPolo from "@/assets/posm/bud-polo.webp";
