@@ -105,6 +105,12 @@ export type ActivityEvent = {
   highlight?: boolean;
 };
 
+export type CurrentUser = {
+  name: string;
+  role: "Tenant Admin" | "Brand Admin" | "Brand Ops" | "Field Manager";
+  allowedBrands: "all" | string[]; // brand names
+};
+
 function timestamp() {
   const d = new Date();
   const hh = String(d.getHours()).padStart(2, "0");
@@ -136,6 +142,8 @@ type Ctx = {
   repOrders: RepOrder[];
   addRepOrder: (o: Omit<RepOrder, "id">) => string;
   updateRepOrder: (id: string, patch: Partial<RepOrder>) => void;
+  currentUser: CurrentUser;
+  setCurrentUser: (u: CurrentUser) => void;
 };
 
 const DemoCtx = React.createContext<Ctx | null>(null);
@@ -151,6 +159,11 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
     { id: "REP-2887", venue: "The Long Hall", rep: "Sarah Connolly", items: 2, total: 64.5, status: "Pending sign-off", date: "5 days ago", brand: "Stella Artois" },
     { id: "REP-2851", venue: "O'Donoghue's", rep: "James O'Brien", items: 6, total: 287.0, status: "Delivered", date: "1 week ago", brand: "Heineken" },
   ]);
+  const [currentUser, setCurrentUser] = React.useState<CurrentUser>({
+    name: "Mark Dunne",
+    role: "Tenant Admin",
+    allowedBrands: "all",
+  });
 
   const addRepOrder = React.useCallback((o: Omit<RepOrder, "id">) => {
     const id = `REP-${Math.floor(Math.random() * 9000) + 1000}`;
@@ -255,7 +268,7 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
   }, []);
   return (
     <DemoCtx.Provider
-      value={{ screen, go, reset, draft, updateDraft, onboardedTenants, activateTenant, activity, pushActivity, brands, addBrand, repOrders, addRepOrder, updateRepOrder }}
+      value={{ screen, go, reset, draft, updateDraft, onboardedTenants, activateTenant, activity, pushActivity, brands, addBrand, repOrders, addRepOrder, updateRepOrder, currentUser, setCurrentUser }}
     >
       {children}
     </DemoCtx.Provider>
