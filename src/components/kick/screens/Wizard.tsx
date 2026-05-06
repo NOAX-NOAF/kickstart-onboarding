@@ -364,19 +364,24 @@ export function Wiz4() {
 
 /* ------------------- STEP 5 ------------------- */
 export function Wiz5() {
+  const { draft, updateDraft } = useDemo();
   return (
     <AppShell>
       <div className="max-w-5xl mx-auto">
         <Crumbs step={5} />
         <h1 className="text-2xl font-bold tracking-tight">Onboard new tenant</h1>
-        <p className="text-sm text-muted-foreground mt-1 mb-8">Step 5 of 6: Tenant admin user. Invite the first user from ABInBev who will manage their tenant in Kick.</p>
+        <p className="text-sm text-muted-foreground mt-1 mb-8">Step 5 of 6: Tenant admin user. Invite the first user from {draft.tradingName} who will manage their tenant in Kick.</p>
         <WizardProgress step={5} />
         <div className="bg-card border rounded-xl p-6 max-w-3xl">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <Field label="Name"><input defaultValue="Mark Dunne" className={I} /></Field>
-            <Field label="Email"><input defaultValue="mark.dunne@ab-inbev.com" className={I} /></Field>
+            <Field label="Name">
+              <input value={draft.adminName} onChange={(e) => updateDraft({ adminName: e.target.value })} className={I} />
+            </Field>
+            <Field label="Email">
+              <input value={draft.adminEmail} onChange={(e) => updateDraft({ adminEmail: e.target.value })} className={I} />
+            </Field>
             <Field label="Role">
-              <select className={I}>
+              <select value={draft.adminRole} onChange={(e) => updateDraft({ adminRole: e.target.value })} className={I}>
                 <option>Tenant Admin</option><option>Brand Admin</option><option>Brand Ops</option><option>Field Manager</option>
               </select>
             </Field>
@@ -394,7 +399,7 @@ export function Wiz5() {
             <Field label="Welcome message">
               <textarea
                 rows={4}
-                defaultValue="Welcome to Kick. We're excited to have ABInBev on the platform. Click the link in this email to set your password and explore your tenant dashboard."
+                defaultValue={`Welcome to Kick. We're excited to have ${draft.tradingName} on the platform. Click the link in this email to set your password and explore your tenant dashboard.`}
                 className="w-full p-3 rounded-md border bg-background text-sm focus:ring-2 focus:ring-ring outline-none transition-all"
               />
             </Field>
