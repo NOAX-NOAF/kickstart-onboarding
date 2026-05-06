@@ -342,13 +342,13 @@ export function Wiz4() {
             <h3 className="font-semibold mb-4">Data import (optional)</h3>
             <div className="space-y-3">
               <button
-                onClick={() => updateDraft({ venuesImported: 247 })}
+                onClick={() => updateDraft({ venuesImported: 1247 })}
                 className={`w-full text-left p-3 rounded-md border-2 border-dashed transition-all ${csvDone ? "border-primary bg-accent/30" : "hover:border-primary/50"}`}
               >
                 {csvDone ? (
-                  <div className="text-sm font-medium text-primary inline-flex items-center gap-1.5"><Check className="h-4 w-4" /> {draft.venuesImported} venues imported</div>
+                  <div className="text-sm font-medium text-primary inline-flex items-center gap-1.5"><Check className="h-4 w-4" /> irish-bars.csv — {draft.venuesImported.toLocaleString()} Irish bars imported</div>
                 ) : (
-                  <div className="text-sm">📤 Upload venue list (CSV)</div>
+                  <div className="text-sm">📤 Upload venue list (CSV) — e.g. irish-bars.csv</div>
                 )}
               </button>
               <button className="w-full text-left p-3 rounded-md border-2 border-dashed hover:border-primary/50 transition-colors text-sm">📤 Upload existing campaign data</button>
