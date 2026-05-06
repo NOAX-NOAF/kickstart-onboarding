@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useDemo, type Brand } from "@/lib/demo-state";
+import { useDemo, type Brand, type RepOrder } from "@/lib/demo-state";
 import { AppShell } from "../AppShell";
 import {
   Megaphone, Package, Users, ArrowRight, Check, Plus, Minus, Loader2,
@@ -518,7 +518,6 @@ const repVenues = [
 ];
 
 type RepBasket = Record<string, number>;
-type RepOrder = { id: string; venue: string; items: number; total: number; status: "Verified" | "Awaiting verification" | "Delivered"; date: string };
 
 function ProductTile({ name, brand, price, img, qty, onInc, onDec }: { name: string; brand: string; price: number; img: string | null; qty: number; onInc: () => void; onDec: () => void }) {
   return (
@@ -546,20 +545,17 @@ function ProductTile({ name, brand, price, img, qty, onInc, onDec }: { name: str
 }
 
 export function RepPortal() {
-  const { go, brands } = useDemo();
+  const { go, brands, repOrders, addRepOrder, updateRepOrder } = useDemo();
+  const repName = "Aoife Byrne";
   const [tab, setTab] = React.useState<"catalogue" | "basket" | "orders" | "verify">("catalogue");
   const [brandFilter, setBrandFilter] = React.useState<string>("All brands");
   const [posType, setPosType] = React.useState("All POS types");
   const [search, setSearch] = React.useState("");
   const [venue, setVenue] = React.useState(repVenues[0]);
   const [basket, setBasket] = React.useState<RepBasket>({});
-  const [orders, setOrders] = React.useState<RepOrder[]>([
-    { id: "REP-2891", venue: "Kehoe's Pub", items: 4, total: 142.0, status: "Verified", date: "2 days ago" },
-    { id: "REP-2887", venue: "The Long Hall", items: 2, total: 64.5, status: "Awaiting verification", date: "5 days ago" },
-    { id: "REP-2851", venue: "O'Donoghue's", items: 6, total: 287.0, status: "Delivered", date: "1 week ago" },
-  ]);
   const [tip, setTip] = React.useState(true);
   const [verifyOrder, setVerifyOrder] = React.useState<RepOrder | null>(null);
+  const orders = repOrders;
 
   const allBrandNames = ["All brands", ...Array.from(new Set([...brands.map((b) => b.name), ...repCatalogue.map((p) => p.brand)]))];
   const filtered = repCatalogue.filter((p) =>
@@ -580,9 +576,17 @@ export function RepPortal() {
 
   function placeOrder() {
     if (basketEntries.length === 0) return;
-    const id = `REP-${Math.floor(Math.random() * 9000) + 1000}`;
-    const ord: RepOrder = { id, venue, items: basketCount, total: basketTotal, status: "Awaiting verification", date: "Just now" };
-    setOrders((o) => [ord, ...o]);
+    const dominantBrand = basketEntries[0]?.brand;
+    const id = addRepOrder({
+      venue,
+      rep: repName,
+      items: basketCount,
+      total: basketTotal,
+      status: "Awaiting verification",
+      date: "Just now",
+      brand: dominantBrand,
+    });
+    const ord: RepOrder = { id, venue, rep: repName, items: basketCount, total: basketTotal, status: "Awaiting verification", date: "Just now", brand: dominantBrand };
     setBasket({});
     setTab("verify");
     setVerifyOrder(ord);
@@ -785,7 +789,7 @@ export function RepPortal() {
           <RepVerifyView
             order={verifyOrder ?? orders[0]}
             onDone={(id) => {
-              setOrders((list) => list.map((o) => (o.id === id ? { ...o, status: "Verified" } : o)));
+              updateRepOrder(id, { status: "Pending sign-off" });
               setVerifyOrder(null);
               setTab("orders");
             }}
@@ -1376,10 +1380,11 @@ export function CampaignsList() {
 
 /* ------------------- POSM LIST ------------------- */
 export function PosmList() {
-  const { go, draft } = useDemo();
+  const { go, draft, repOrders, updateRepOrder } = useDemo();
   const items = [
     { id: "POSM-A7F3K2025", campaign: `${draft.brandName} Champions League`, items: 8, total: 4657.5, status: "In progress" },
   ];
+  const pending = repOrders.filter((o) => o.status === "Pending sign-off" || o.status === "Awaiting verification");
   return (
     <AppShell context="tenant">
       <div className="max-w-7xl mx-auto">
@@ -1392,6 +1397,84 @@ export function PosmList() {
             <Plus className="h-4 w-4" /> New order
           </button>
         </div>
+
+        {/* Rep orders awaiting admin sign-off */}
+        <div className="bg-card border rounded-xl overflow-hidden mb-6">
+          <div className="px-5 py-3 border-b bg-muted/30 flex items-center justify-between">
+            <div className="inline-flex items-center gap-2">
+              <ShoppingCart className="h-4 w-4 text-primary" />
+              <span className="text-sm font-semibold">Rep portal orders</span>
+              {pending.length > 0 && (
+                <span className="inline-flex items-center text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "var(--kick-amber-bg)", color: "var(--kick-amber)" }}>
+                  {pending.length} need sign-off
+                </span>
+              )}
+            </div>
+            <button onClick={() => go("rep-portal")} className="text-xs text-primary hover:underline inline-flex items-center gap-1">
+              Open Rep Portal <ArrowRight className="h-3 w-3" />
+            </button>
+          </div>
+          {repOrders.length === 0 ? (
+            <div className="px-5 py-8 text-center text-sm text-muted-foreground">No rep orders yet.</div>
+          ) : (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-[11px] uppercase tracking-wider text-muted-foreground border-b">
+                  <th className="px-5 py-3 font-semibold">Order</th>
+                  <th className="py-3 font-semibold">Venue</th>
+                  <th className="py-3 font-semibold">Rep</th>
+                  <th className="py-3 font-semibold">Items</th>
+                  <th className="py-3 font-semibold">Total</th>
+                  <th className="py-3 font-semibold">Status</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {repOrders.map((o) => {
+                  const needsSignoff = o.status === "Pending sign-off" || o.status === "Awaiting verification";
+                  return (
+                    <tr key={o.id} className="hover:bg-muted/40 transition-colors">
+                      <td className="px-5 py-3 font-mono text-xs">{o.id}</td>
+                      <td className="py-3">{o.venue}</td>
+                      <td className="py-3 text-muted-foreground">{o.rep}</td>
+                      <td className="py-3 tabular-nums">{o.items}</td>
+                      <td className="py-3 tabular-nums font-medium">{fmtEUR(o.total)}</td>
+                      <td className="py-3">
+                        <span
+                          className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-full"
+                          style={
+                            o.status === "Approved" || o.status === "Verified"
+                              ? { background: "var(--kick-success-bg)", color: "var(--kick-success)" }
+                              : needsSignoff
+                              ? { background: "var(--kick-amber-bg)", color: "var(--kick-amber)" }
+                              : { background: "var(--accent)", color: "var(--accent-foreground)" }
+                          }
+                        >
+                          <span className="h-1.5 w-1.5 rounded-full bg-current opacity-70" /> {o.status.toUpperCase()}
+                        </span>
+                      </td>
+                      <td className="py-3 pr-5 text-right">
+                        {needsSignoff ? (
+                          <button
+                            onClick={() => updateRepOrder(o.id, { status: "Approved" })}
+                            className="text-xs h-8 px-3 rounded-md bg-primary text-primary-foreground font-medium hover:opacity-90 inline-flex items-center gap-1"
+                          >
+                            <ShieldCheck className="h-3.5 w-3.5" /> Sign off
+                          </button>
+                        ) : (
+                          <span className="text-xs text-muted-foreground inline-flex items-center gap-1">
+                            <Check className="h-3 w-3" /> Done
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
+
         <div className="bg-card border rounded-xl overflow-hidden">
           <table className="w-full text-sm">
             <thead>

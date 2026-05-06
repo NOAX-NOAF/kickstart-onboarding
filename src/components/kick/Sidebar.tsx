@@ -34,7 +34,7 @@ const platformSections: Section[] = [
 const tenantSections: Section[] = [
   { title: "Overview", items: [
     { label: "Dashboard", icon: LayoutDashboard, screen: "tenant-dashboard", activeOn: ["tenant-dashboard", "final-dashboard"] },
-    { label: "Brands", icon: Palette },
+    { label: "Brands", icon: Palette, screen: "brands-list", activeOn: ["brands-list"] },
   ]},
   { title: "Operations", items: [
     { label: "Campaigns", icon: Megaphone, screen: "campaigns-list", activeOn: ["campaigns-list", "camp-1", "camp-2", "camp-3", "camp-4", "camp-live"] },
