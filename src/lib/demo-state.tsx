@@ -15,7 +15,8 @@ export type Screen =
   | "posm-list"
   | "field-evidence"
   | "invite-team"
-  | "brands-list";
+  | "brands-list"
+  | "rep-portal";
 
 export type TenantDraft = {
   legalName: string;
