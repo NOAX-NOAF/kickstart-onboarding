@@ -518,7 +518,6 @@ const repVenues = [
 ];
 
 type RepBasket = Record<string, number>;
-type RepOrder = { id: string; venue: string; items: number; total: number; status: "Verified" | "Awaiting verification" | "Delivered"; date: string };
 
 function ProductTile({ name, brand, price, img, qty, onInc, onDec }: { name: string; brand: string; price: number; img: string | null; qty: number; onInc: () => void; onDec: () => void }) {
   return (
