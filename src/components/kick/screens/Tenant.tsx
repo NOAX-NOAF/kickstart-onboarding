@@ -643,18 +643,18 @@ export function RepPortal() {
       </header>
 
       {/* Venue context bar */}
-      <div className="border-b bg-muted/30 px-5 py-2.5 flex items-center justify-between gap-3 flex-wrap text-sm">
-        <div className="inline-flex items-center gap-2">
-          <MapPinned className="h-4 w-4 text-primary" />
-          <span className="text-muted-foreground">Visiting:</span>
-          <select value={venue} onChange={(e) => setVenue(e.target.value)} className="h-8 px-2 rounded-md border bg-background text-sm font-medium focus:ring-2 focus:ring-ring outline-none">
+      <div className="border-b bg-muted/30 px-4 sm:px-5 py-2.5 flex items-center justify-between gap-3 flex-wrap text-sm">
+        <div className="inline-flex items-center gap-2 min-w-0 flex-1">
+          <MapPinned className="h-4 w-4 text-primary shrink-0" />
+          <span className="text-muted-foreground hidden sm:inline">Visiting:</span>
+          <select value={venue} onChange={(e) => setVenue(e.target.value)} className="h-8 px-2 rounded-md border bg-background text-sm font-medium focus:ring-2 focus:ring-ring outline-none max-w-full truncate">
             {repVenues.map((v) => <option key={v}>{v}</option>)}
           </select>
         </div>
-        <div className="text-xs text-muted-foreground">Aoife Byrne · Field rep · Dublin North</div>
+        <div className="text-xs text-muted-foreground hidden sm:block">Aoife Byrne · Field rep · Dublin North</div>
       </div>
 
-      <main className="flex-1 px-4 sm:px-6 py-5 max-w-6xl mx-auto w-full pb-24">
+      <main className="flex-1 px-3 sm:px-6 py-4 sm:py-5 max-w-6xl mx-auto w-full pb-24">
         {tab === "catalogue" && (
           <>
             {/* Search */}
@@ -747,16 +747,16 @@ export function RepPortal() {
               <>
                 <div className="bg-card border rounded-xl divide-y">
                   {basketEntries.map((e) => (
-                    <div key={e.name} className="p-4 flex items-center gap-3">
-                      <div className="h-14 w-14 rounded border bg-muted/40 flex items-center justify-center overflow-hidden shrink-0">
+                    <div key={e.name} className="p-3 sm:p-4 flex items-center gap-3 flex-wrap sm:flex-nowrap">
+                      <div className="h-12 w-12 sm:h-14 sm:w-14 rounded border bg-muted/40 flex items-center justify-center overflow-hidden shrink-0">
                         {e.img ? <img src={e.img} alt="" className="h-full w-full object-contain p-1" /> : <Package className="h-6 w-6 text-muted-foreground/50" />}
                       </div>
-                      <div className="flex-1 min-w-0">
+                      <div className="flex-1 min-w-0 basis-[calc(100%-4rem)] sm:basis-auto">
                         <div className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">{e.brand}</div>
                         <div className="font-medium text-sm truncate">{e.name}</div>
                         <div className="text-xs text-muted-foreground">{fmtEUR(e.price)} / unit</div>
                       </div>
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1 ml-auto sm:ml-0">
                         <button onClick={() => dec(e.name)} className="h-8 w-8 rounded border hover:bg-muted flex items-center justify-center"><Minus className="h-3 w-3" /></button>
                         <div className="w-8 text-center text-sm font-medium tabular-nums">{e.qty}</div>
                         <button onClick={() => inc(e.name)} className="h-8 w-8 rounded border hover:bg-muted flex items-center justify-center"><Plus className="h-3 w-3" /></button>
@@ -782,13 +782,13 @@ export function RepPortal() {
             <h1 className="text-xl font-bold mb-4">My orders</h1>
             <div className="bg-card border rounded-xl divide-y">
               {orders.map((o) => (
-                <div key={o.id} className="p-4 flex items-center justify-between gap-3">
-                  <div className="min-w-0">
+                <div key={o.id} className="p-3 sm:p-4 flex items-center justify-between gap-3 flex-wrap sm:flex-nowrap">
+                  <div className="min-w-0 flex-1">
                     <div className="font-mono text-xs text-muted-foreground">{o.id}</div>
                     <div className="font-medium text-sm truncate">{o.venue}</div>
                     <div className="text-xs text-muted-foreground">{o.items} items · {fmtEUR(o.total)} · {o.date}</div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 shrink-0 ml-auto">
                     <span
                       className="text-[11px] px-2 py-1 rounded-full font-medium"
                       style={
@@ -827,7 +827,7 @@ export function RepPortal() {
       </main>
 
       {/* Bottom tab bar */}
-      <nav className="fixed bottom-0 inset-x-0 bg-card border-t grid grid-cols-4 z-40">
+      <nav className="fixed bottom-0 inset-x-0 bg-card border-t grid grid-cols-4 z-40 pb-[env(safe-area-inset-bottom)]">
         {[
           { id: "catalogue", label: "Catalogue", icon: LayoutGrid },
           { id: "basket", label: `Basket${basketCount ? ` (${basketCount})` : ""}`, icon: ShoppingCart },
@@ -840,12 +840,12 @@ export function RepPortal() {
             <button
               key={t.id}
               onClick={() => setTab(t.id as typeof tab)}
-              className="py-2.5 flex flex-col items-center gap-0.5 text-xs transition-colors relative"
+              className="py-2.5 flex flex-col items-center gap-0.5 text-[11px] sm:text-xs transition-colors relative px-1"
               style={{ color: active ? "var(--primary)" : "var(--muted-foreground)" }}
             >
               {active && <span className="absolute top-0 inset-x-6 h-0.5 bg-primary rounded-b" />}
               <Icon className="h-5 w-5" />
-              <span className="font-medium">{t.label}</span>
+              <span className="font-medium truncate max-w-full">{t.label}</span>
             </button>
           );
         })}
