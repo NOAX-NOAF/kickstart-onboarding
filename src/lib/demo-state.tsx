@@ -10,7 +10,11 @@ export type Screen =
   | "camp-live"
   | "posm-builder"
   | "posm-status"
-  | "final-dashboard";
+  | "final-dashboard"
+  | "campaigns-list"
+  | "posm-list"
+  | "field-evidence"
+  | "invite-team";
 
 export type TenantDraft = {
   legalName: string;

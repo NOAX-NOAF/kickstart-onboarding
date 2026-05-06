@@ -4,13 +4,14 @@ import {
   Megaphone, Camera, Bell, Palette,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { useDemo, type Screen } from "@/lib/demo-state";
 
-type Item = { label: string; icon: LucideIcon; active?: boolean };
+type Item = { label: string; icon: LucideIcon; screen?: Screen; activeOn?: Screen[] };
 type Section = { title: string; items: Item[] };
 
 const platformSections: Section[] = [
   { title: "Operations", items: [
-    { label: "Operations Desk", icon: LayoutDashboard, active: true },
+    { label: "Operations Desk", icon: LayoutDashboard, screen: "ops-desk", activeOn: ["ops-desk"] },
     { label: "POSM", icon: Package },
     { label: "Vouchers", icon: Ticket },
     { label: "Field Ops", icon: Users },
@@ -32,13 +33,13 @@ const platformSections: Section[] = [
 
 const tenantSections: Section[] = [
   { title: "Overview", items: [
-    { label: "Dashboard", icon: LayoutDashboard, active: true },
+    { label: "Dashboard", icon: LayoutDashboard, screen: "tenant-dashboard", activeOn: ["tenant-dashboard", "final-dashboard"] },
     { label: "Brands", icon: Palette },
   ]},
   { title: "Operations", items: [
-    { label: "Campaigns", icon: Megaphone },
-    { label: "POSM", icon: Package },
-    { label: "Field Evidence", icon: Camera },
+    { label: "Campaigns", icon: Megaphone, screen: "campaigns-list", activeOn: ["campaigns-list", "camp-1", "camp-2", "camp-3", "camp-4", "camp-live"] },
+    { label: "POSM", icon: Package, screen: "posm-list", activeOn: ["posm-list", "posm-builder", "posm-status"] },
+    { label: "Field Evidence", icon: Camera, screen: "field-evidence", activeOn: ["field-evidence"] },
     { label: "POS Jobs", icon: ClipboardList },
     { label: "Alerts", icon: Bell },
   ]},
@@ -55,6 +56,7 @@ const tenantSections: Section[] = [
 
 export function Sidebar({ context = "platform" }: { context?: "platform" | "tenant" }) {
   const sections = context === "tenant" ? tenantSections : platformSections;
+  const { screen, go } = useDemo();
   return (
     <aside
       className="w-60 shrink-0 flex flex-col h-[calc(100vh-3.5rem)] sticky top-14"
@@ -67,16 +69,20 @@ export function Sidebar({ context = "platform" }: { context?: "platform" | "tena
               {section.title}
             </div>
             <div className="space-y-0.5">
-              {section.items.map((item) => (
-                <button
-                  key={item.label}
-                  className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-md text-sm transition-colors hover:bg-white/5"
-                  style={item.active ? { background: "var(--kick-sidebar-active)" } : undefined}
-                >
-                  <item.icon className="h-4 w-4 opacity-80" />
-                  {item.label}
-                </button>
-              ))}
+              {section.items.map((item) => {
+                const isActive = item.activeOn ? item.activeOn.includes(screen) : false;
+                return (
+                  <button
+                    key={item.label}
+                    onClick={() => item.screen && go(item.screen)}
+                    className={`w-full flex items-center gap-2.5 px-2 py-1.5 rounded-md text-sm transition-colors hover:bg-white/5 ${item.screen ? "cursor-pointer" : "cursor-default opacity-70"}`}
+                    style={isActive ? { background: "var(--kick-sidebar-active)" } : undefined}
+                  >
+                    <item.icon className="h-4 w-4 opacity-80" />
+                    {item.label}
+                  </button>
+                );
+              })}
             </div>
           </div>
         ))}
