@@ -789,7 +789,7 @@ export function RepPortal() {
           <RepVerifyView
             order={verifyOrder ?? orders[0]}
             onDone={(id) => {
-              setOrders((list) => list.map((o) => (o.id === id ? { ...o, status: "Verified" } : o)));
+              updateRepOrder(id, { status: "Pending sign-off" });
               setVerifyOrder(null);
               setTab("orders");
             }}
