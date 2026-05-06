@@ -5,6 +5,7 @@ import {
   Megaphone, Package, Users, ArrowRight, Check, Plus, Minus, Loader2,
   ChevronRight, ArrowLeft, Search, MapPin, X, ShieldCheck, QrCode,
   MessageSquare, Camera, Send, Mail, Smartphone, Eye, Palette, Upload,
+  ShoppingCart, FileText, RefreshCw, LayoutGrid, MapPinned,
 } from "lucide-react";
 
 import budPolo from "@/assets/posm/bud-polo.webp";
