@@ -573,7 +573,7 @@ function ProductTile({ name, brand, price, img, qty, onInc, onDec }: { name: str
 }
 
 export function RepPortal() {
-  const { go, brands, repOrders, addRepOrder, updateRepOrder } = useDemo();
+  const { go, brands, repOrders, addRepOrder, updateRepOrder, currentUser } = useDemo();
   const repName = "Aoife Byrne";
   const [tab, setTab] = React.useState<"catalogue" | "basket" | "orders" | "verify">("catalogue");
   const [brandFilter, setBrandFilter] = React.useState<string>("All brands");
@@ -585,8 +585,20 @@ export function RepPortal() {
   const [verifyOrder, setVerifyOrder] = React.useState<RepOrder | null>(null);
   const orders = repOrders;
 
-  const allBrandNames = ["All brands", ...Array.from(new Set([...brands.map((b) => b.name), ...repCatalogue.map((p) => p.brand)]))];
+  const tenantBrandNames = React.useMemo(() => {
+    const fromTenant = brands.map((b) => b.name);
+    return currentUser.allowedBrands === "all"
+      ? fromTenant
+      : fromTenant.filter((n) => (currentUser.allowedBrands as string[]).includes(n));
+  }, [brands, currentUser.allowedBrands]);
+  const allBrandNames = ["All brands", ...tenantBrandNames];
+  React.useEffect(() => {
+    if (brandFilter !== "All brands" && !tenantBrandNames.includes(brandFilter)) {
+      setBrandFilter("All brands");
+    }
+  }, [tenantBrandNames, brandFilter]);
   const filtered = repCatalogue.filter((p) =>
+    tenantBrandNames.includes(p.brand) &&
     (brandFilter === "All brands" || p.brand === brandFilter) &&
     (search === "" || p.name.toLowerCase().includes(search.toLowerCase()))
   );
