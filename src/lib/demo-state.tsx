@@ -86,6 +86,17 @@ export type Brand = {
   logo: string | null;
 };
 
+export type RepOrder = {
+  id: string;
+  venue: string;
+  rep: string;
+  items: number;
+  total: number;
+  status: "Awaiting verification" | "Verified" | "Delivered" | "Pending sign-off" | "Approved";
+  date: string;
+  brand?: string;
+};
+
 export type ActivityEvent = {
   id: string;
   t: string;
@@ -122,6 +133,9 @@ type Ctx = {
   pushActivity: (e: Omit<ActivityEvent, "id" | "t"> & { t?: string }) => void;
   brands: Brand[];
   addBrand: (b: Omit<Brand, "id">) => void;
+  repOrders: RepOrder[];
+  addRepOrder: (o: Omit<RepOrder, "id">) => string;
+  updateRepOrder: (id: string, patch: Partial<RepOrder>) => void;
 };
 
 const DemoCtx = React.createContext<Ctx | null>(null);
@@ -132,6 +146,31 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
   const [onboardedTenants, setOnboardedTenants] = React.useState<OnboardedTenant[]>([]);
   const [activity, setActivity] = React.useState<ActivityEvent[]>(seedFeed);
   const [brands, setBrands] = React.useState<Brand[]>([]);
+  const [repOrders, setRepOrders] = React.useState<RepOrder[]>([
+    { id: "REP-2891", venue: "Kehoe's Pub", rep: "Aoife Byrne", items: 4, total: 142.0, status: "Verified", date: "2 days ago", brand: "Budweiser" },
+    { id: "REP-2887", venue: "The Long Hall", rep: "Sarah Connolly", items: 2, total: 64.5, status: "Pending sign-off", date: "5 days ago", brand: "Stella Artois" },
+    { id: "REP-2851", venue: "O'Donoghue's", rep: "James O'Brien", items: 6, total: 287.0, status: "Delivered", date: "1 week ago", brand: "Heineken" },
+  ]);
+
+  const addRepOrder = React.useCallback((o: Omit<RepOrder, "id">) => {
+    const id = `REP-${Math.floor(Math.random() * 9000) + 1000}`;
+    setRepOrders((list) => [{ ...o, id }, ...list]);
+    setActivity((list) => [
+      { id: `ro_${Date.now()}`, t: timestamp(), color: "amber", msg: `${o.brand ?? "Field"}: Rep ${o.rep} placed order ${id} for ${o.venue} — awaiting admin sign-off`, highlight: true },
+      ...list,
+    ].slice(0, 12));
+    return id;
+  }, []);
+
+  const updateRepOrder = React.useCallback((id: string, patch: Partial<RepOrder>) => {
+    setRepOrders((list) => list.map((o) => (o.id === id ? { ...o, ...patch } : o)));
+    if (patch.status) {
+      setActivity((list) => [
+        { id: `ru_${Date.now()}`, t: timestamp(), color: patch.status === "Approved" ? "success" : "primary", msg: `Rep order ${id}: ${patch.status}` },
+        ...list,
+      ].slice(0, 12));
+    }
+  }, []);
 
   // Seed first brand from draft on first read
   const seededRef = React.useRef(false);
@@ -215,7 +254,7 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
   }, []);
   return (
     <DemoCtx.Provider
-      value={{ screen, go, reset, draft, updateDraft, onboardedTenants, activateTenant, activity, pushActivity, brands, addBrand }}
+      value={{ screen, go, reset, draft, updateDraft, onboardedTenants, activateTenant, activity, pushActivity, brands, addBrand, repOrders, addRepOrder, updateRepOrder }}
     >
       {children}
     </DemoCtx.Provider>
