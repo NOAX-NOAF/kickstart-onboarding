@@ -1376,10 +1376,11 @@ export function CampaignsList() {
 
 /* ------------------- POSM LIST ------------------- */
 export function PosmList() {
-  const { go, draft } = useDemo();
+  const { go, draft, repOrders, updateRepOrder } = useDemo();
   const items = [
     { id: "POSM-A7F3K2025", campaign: `${draft.brandName} Champions League`, items: 8, total: 4657.5, status: "In progress" },
   ];
+  const pending = repOrders.filter((o) => o.status === "Pending sign-off" || o.status === "Awaiting verification");
   return (
     <AppShell context="tenant">
       <div className="max-w-7xl mx-auto">
@@ -1392,6 +1393,84 @@ export function PosmList() {
             <Plus className="h-4 w-4" /> New order
           </button>
         </div>
+
+        {/* Rep orders awaiting admin sign-off */}
+        <div className="bg-card border rounded-xl overflow-hidden mb-6">
+          <div className="px-5 py-3 border-b bg-muted/30 flex items-center justify-between">
+            <div className="inline-flex items-center gap-2">
+              <ShoppingCart className="h-4 w-4 text-primary" />
+              <span className="text-sm font-semibold">Rep portal orders</span>
+              {pending.length > 0 && (
+                <span className="inline-flex items-center text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "var(--kick-amber-bg)", color: "var(--kick-amber)" }}>
+                  {pending.length} need sign-off
+                </span>
+              )}
+            </div>
+            <button onClick={() => go("rep-portal")} className="text-xs text-primary hover:underline inline-flex items-center gap-1">
+              Open Rep Portal <ArrowRight className="h-3 w-3" />
+            </button>
+          </div>
+          {repOrders.length === 0 ? (
+            <div className="px-5 py-8 text-center text-sm text-muted-foreground">No rep orders yet.</div>
+          ) : (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-[11px] uppercase tracking-wider text-muted-foreground border-b">
+                  <th className="px-5 py-3 font-semibold">Order</th>
+                  <th className="py-3 font-semibold">Venue</th>
+                  <th className="py-3 font-semibold">Rep</th>
+                  <th className="py-3 font-semibold">Items</th>
+                  <th className="py-3 font-semibold">Total</th>
+                  <th className="py-3 font-semibold">Status</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {repOrders.map((o) => {
+                  const needsSignoff = o.status === "Pending sign-off" || o.status === "Awaiting verification";
+                  return (
+                    <tr key={o.id} className="hover:bg-muted/40 transition-colors">
+                      <td className="px-5 py-3 font-mono text-xs">{o.id}</td>
+                      <td className="py-3">{o.venue}</td>
+                      <td className="py-3 text-muted-foreground">{o.rep}</td>
+                      <td className="py-3 tabular-nums">{o.items}</td>
+                      <td className="py-3 tabular-nums font-medium">{fmtEUR(o.total)}</td>
+                      <td className="py-3">
+                        <span
+                          className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-full"
+                          style={
+                            o.status === "Approved" || o.status === "Verified"
+                              ? { background: "var(--kick-success-bg)", color: "var(--kick-success)" }
+                              : needsSignoff
+                              ? { background: "var(--kick-amber-bg)", color: "var(--kick-amber)" }
+                              : { background: "var(--accent)", color: "var(--accent-foreground)" }
+                          }
+                        >
+                          <span className="h-1.5 w-1.5 rounded-full bg-current opacity-70" /> {o.status.toUpperCase()}
+                        </span>
+                      </td>
+                      <td className="py-3 pr-5 text-right">
+                        {needsSignoff ? (
+                          <button
+                            onClick={() => updateRepOrder(o.id, { status: "Approved" })}
+                            className="text-xs h-8 px-3 rounded-md bg-primary text-primary-foreground font-medium hover:opacity-90 inline-flex items-center gap-1"
+                          >
+                            <ShieldCheck className="h-3.5 w-3.5" /> Sign off
+                          </button>
+                        ) : (
+                          <span className="text-xs text-muted-foreground inline-flex items-center gap-1">
+                            <Check className="h-3 w-3" /> Done
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
+
         <div className="bg-card border rounded-xl overflow-hidden">
           <table className="w-full text-sm">
             <thead>
