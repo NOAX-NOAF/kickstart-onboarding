@@ -26,10 +26,14 @@ export const Route = createFileRoute("/")({
 function ScreenRouter() {
   const { screen, go } = useDemo();
   const isMobile = useIsMobile();
+  const hasRedirectedRef = React.useRef(false);
 
   // On mobile, restrict the experience to the Rep Portal only.
   React.useEffect(() => {
-    if (isMobile === true && screen !== "rep-portal" && screen !== "login") {
+    if (isMobile !== true) return;
+    if (hasRedirectedRef.current) return;
+    if (screen !== "rep-portal" && screen !== "login") {
+      hasRedirectedRef.current = true;
       go("rep-portal");
     }
   }, [isMobile, screen, go]);
